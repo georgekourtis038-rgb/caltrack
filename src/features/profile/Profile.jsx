@@ -2,82 +2,210 @@ import { useEffect, useState } from 'react'
 import PageHeader from '../../components/PageHeader.jsx'
 import { useAuth } from '../auth/AuthContext.jsx'
 import { supabase } from '../../lib/supabase.js'
+import { BADGES } from '../badges/badges.js'
+
+const AVATAR_COLORS = ['#22c55e', '#3b82f6', '#ec4899', '#f59e0b', '#8b5cf6', '#ef4444']
+
+const GOAL_FIELDS = [
+  { key: 'calorie_goal', label: 'Calories', suffix: 'kcal' },
+  { key: 'protein_goal', label: 'Protein', suffix: 'g' },
+  { key: 'carbs_goal', label: 'Carbs', suffix: 'g' },
+  { key: 'fat_goal', label: 'Fat', suffix: 'g' },
+]
 
 export default function Profile() {
   const { user, signOut } = useAuth()
   const [profile, setProfile] = useState(null)
+  const [gam, setGam] = useState(null)
+  const [unlocked, setUnlocked] = useState({}) // badge_key -> unlocked_at
+  const [loading, setLoading] = useState(true)
+  const [name, setName] = useState('')
+  const [goals, setGoals] = useState({})
+  const [savedAt, setSavedAt] = useState(null)
   const [signingOut, setSigningOut] = useState(false)
 
   useEffect(() => {
     if (!user) return
     let active = true
-    supabase
-      .from('profiles')
-      .select('display_name, calorie_goal, partner_id, weight_goal_type')
-      .eq('id', user.id)
-      .single()
-      .then(({ data }) => {
-        if (active) setProfile(data)
+    Promise.all([
+      supabase.from('profiles').select('*').eq('id', user.id).single(),
+      supabase.from('gamification').select('level, total_xp').eq('user_id', user.id).single(),
+      supabase.from('badges').select('badge_key, unlocked_at').eq('user_id', user.id),
+    ]).then(([p, g, b]) => {
+      if (!active) return
+      setProfile(p.data)
+      setGam(g.data)
+      setName(p.data?.display_name || '')
+      setGoals({
+        calorie_goal: p.data?.calorie_goal ?? '',
+        protein_goal: p.data?.protein_goal ?? '',
+        carbs_goal: p.data?.carbs_goal ?? '',
+        fat_goal: p.data?.fat_goal ?? '',
       })
+      const map = {}
+      for (const row of b.data || []) map[row.badge_key] = row.unlocked_at
+      setUnlocked(map)
+      setLoading(false)
+    })
     return () => {
       active = false
     }
   }, [user])
 
-  const displayName = profile?.display_name || user?.email || 'You'
-  const initial = displayName.trim().charAt(0).toUpperCase() || '🙂'
+  async function save(patch) {
+    const { error } = await supabase.from('profiles').update(patch).eq('id', user.id)
+    if (!error) {
+      setProfile((p) => ({ ...p, ...patch }))
+      setSavedAt(Date.now())
+    }
+  }
 
-  const rows = [
-    {
-      label: 'Daily calorie goal',
-      value: profile ? profile.calorie_goal.toLocaleString() : '—',
-    },
-    { label: 'Partner', value: profile?.partner_id ? 'Linked' : 'Not linked' },
-    { label: 'Goal', value: profile?.weight_goal_type ?? 'Not set' },
-  ]
+  function saveGoals() {
+    const patch = {}
+    for (const f of GOAL_FIELDS) {
+      const v = goals[f.key]
+      patch[f.key] = v === '' || v == null ? null : Math.round(Number(v))
+    }
+    save(patch)
+  }
 
   async function handleSignOut() {
     setSigningOut(true)
     await signOut()
-    // AuthContext's listener will swap back to the auth screen.
   }
 
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-md px-5 pt-6">
+        <div className="h-24 animate-pulse rounded-2xl bg-white/5" />
+      </div>
+    )
+  }
+
+  const color = profile?.avatar_color || AVATAR_COLORS[0]
+  const initial = (name || user?.email || '?').trim().charAt(0).toUpperCase()
+
   return (
-    <div className="mx-auto max-w-md">
+    <div className="mx-auto max-w-md px-5 pt-6">
       <PageHeader title="Profile" />
 
-      <section className="px-5">
-        <div className="flex items-center gap-4 rounded-2xl bg-surface-2 p-5 ring-1 ring-white/5">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-brand/20 text-xl font-bold text-brand">
+      {/* Identity card */}
+      <section className="rounded-2xl bg-surface-2 p-5 ring-1 ring-white/5">
+        <div className="flex items-center gap-4">
+          <div
+            className="flex h-16 w-16 items-center justify-center rounded-full text-2xl font-bold text-surface"
+            style={{ backgroundColor: color }}
+          >
             {initial}
           </div>
-          <div className="min-w-0">
-            <p className="truncate text-lg font-semibold text-white">{displayName}</p>
-            <p className="truncate text-sm text-slate-400">{user?.email}</p>
+          <div className="min-w-0 flex-1">
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onBlur={() => name.trim() && name !== profile.display_name && save({ display_name: name.trim() })}
+              className="w-full rounded-lg bg-transparent text-lg font-semibold text-white outline-none focus:bg-white/5 focus:px-2"
+            />
+            <p className="truncate px-0 text-sm text-slate-400">{user?.email}</p>
+          </div>
+        </div>
+
+        <div className="mt-4 flex items-center gap-3">
+          <span className="rounded-md bg-brand px-2 py-0.5 text-xs font-bold text-surface">
+            Level {gam?.level ?? 1}
+          </span>
+          <span className="text-sm text-slate-300">{(gam?.total_xp ?? 0).toLocaleString()} XP</span>
+        </div>
+
+        {/* Avatar color */}
+        <div className="mt-4">
+          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">Avatar color</p>
+          <div className="flex gap-2">
+            {AVATAR_COLORS.map((c) => (
+              <button
+                key={c}
+                onClick={() => save({ avatar_color: c })}
+                aria-label={`Set color ${c}`}
+                className={`h-8 w-8 rounded-full transition-transform active:scale-90 ${
+                  color === c ? 'ring-2 ring-white ring-offset-2 ring-offset-surface-2' : ''
+                }`}
+                style={{ backgroundColor: c }}
+              />
+            ))}
           </div>
         </div>
       </section>
 
-      <section className="mt-4 px-5">
-        <ul className="divide-y divide-white/5 overflow-hidden rounded-2xl bg-surface-2 ring-1 ring-white/5">
-          {rows.map((r) => (
-            <li key={r.label} className="flex items-center justify-between px-5 py-3.5">
-              <span className="text-sm text-slate-300">{r.label}</span>
-              <span className="text-sm capitalize text-slate-500">{r.value}</span>
-            </li>
+      {/* Goals */}
+      <section className="mt-4 rounded-2xl bg-surface-2 p-5 ring-1 ring-white/5">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-slate-200">Daily goals</h2>
+          {savedAt && <span className="text-xs text-brand">Saved ✓</span>}
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {GOAL_FIELDS.map((f) => (
+            <label key={f.key} className="block">
+              <span className="mb-1 block text-xs text-slate-400">
+                {f.label} <span className="text-slate-600">({f.suffix})</span>
+              </span>
+              <input
+                type="number"
+                inputMode="numeric"
+                value={goals[f.key]}
+                onChange={(e) => setGoals((g) => ({ ...g, [f.key]: e.target.value }))}
+                onBlur={saveGoals}
+                className="w-full rounded-xl bg-white/5 px-3 py-2.5 text-base text-white outline-none ring-1 ring-white/10 focus:ring-brand"
+              />
+            </label>
           ))}
-        </ul>
-      </section>
-
-      <section className="mt-6 px-5">
+        </div>
         <button
-          onClick={handleSignOut}
-          disabled={signingOut}
-          className="w-full rounded-xl bg-surface-2 px-4 py-3 text-sm font-semibold text-pink-400 ring-1 ring-white/10 transition-colors active:bg-white/5 disabled:opacity-60"
+          onClick={saveGoals}
+          className="mt-3 w-full rounded-xl bg-brand/15 px-4 py-2.5 text-sm font-semibold text-brand active:bg-brand/25"
         >
-          {signingOut ? 'Signing out…' : 'Sign out'}
+          Save goals
         </button>
       </section>
+
+      {/* Trophy shelf */}
+      <section className="mt-4">
+        <h2 className="mb-2 px-1 text-sm font-semibold text-slate-200">Badges</h2>
+        <div className="grid grid-cols-2 gap-3">
+          {BADGES.map((b) => {
+            const date = unlocked[b.key]
+            const isUnlocked = Boolean(date)
+            return (
+              <div
+                key={b.key}
+                className={`rounded-2xl p-4 ring-1 ${
+                  isUnlocked
+                    ? 'bg-surface-2 ring-brand/30'
+                    : 'bg-surface-2/40 ring-white/5'
+                }`}
+              >
+                <div className={`text-3xl ${isUnlocked ? '' : 'opacity-30 grayscale'}`}>{b.icon}</div>
+                <p className={`mt-1.5 text-sm font-semibold ${isUnlocked ? 'text-white' : 'text-slate-500'}`}>
+                  {b.name}
+                </p>
+                {isUnlocked ? (
+                  <p className="text-[11px] text-brand">
+                    {new Date(date).toLocaleDateString()}
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-slate-600">{b.condition}</p>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </section>
+
+      <button
+        onClick={handleSignOut}
+        disabled={signingOut}
+        className="mt-6 w-full rounded-xl bg-surface-2 px-4 py-3 text-sm font-semibold text-pink-400 ring-1 ring-white/10 active:bg-white/5 disabled:opacity-60"
+      >
+        {signingOut ? 'Signing out…' : 'Sign out'}
+      </button>
     </div>
   )
 }

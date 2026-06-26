@@ -1,4 +1,5 @@
 import { supabase } from '../../lib/supabase.js'
+import { evaluateBadges } from '../badges/badges.js'
 
 const XP_PER_MEAL = 10
 
@@ -51,6 +52,13 @@ export async function logFoodEntry(userId, entry) {
   if (insertError) throw insertError
 
   await awardXp(userId, today)
+
+  // Badges are a nice-to-have side effect — never let them block a log.
+  try {
+    await evaluateBadges(userId)
+  } catch (e) {
+    console.error('Badge evaluation failed:', e)
+  }
 }
 
 async function awardXp(userId, today) {
