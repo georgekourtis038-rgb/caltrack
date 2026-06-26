@@ -1,10 +1,19 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { motion } from 'framer-motion'
 import PageHeader from '../../components/PageHeader.jsx'
 import { useAuth } from '../auth/AuthContext.jsx'
 import { supabase } from '../../lib/supabase.js'
 import { BADGES } from '../badges/badges.js'
+import { computeTargets } from '../../lib/targets.js'
 
 const AVATAR_COLORS = ['#22c55e', '#3b82f6', '#ec4899', '#f59e0b', '#8b5cf6', '#ef4444']
+
+const ACTIVITY = [
+  ['1.2', 'Sedentary'],
+  ['1.375', 'Light'],
+  ['1.55', 'Moderate'],
+  ['1.725', 'Active'],
+]
 
 const GOAL_FIELDS = [
   { key: 'calorie_goal', label: 'Calories', suffix: 'kcal' },
@@ -17,9 +26,12 @@ export default function Profile() {
   const { user, signOut } = useAuth()
   const [profile, setProfile] = useState(null)
   const [gam, setGam] = useState(null)
-  const [unlocked, setUnlocked] = useState({}) // badge_key -> unlocked_at
+  const [unlocked, setUnlocked] = useState({})
+  const [currentWeight, setCurrentWeight] = useState(null)
   const [loading, setLoading] = useState(true)
+
   const [name, setName] = useState('')
+  const [stats, setStats] = useState({ age: '', height_cm: '', sex: '', weight_goal_type: '', goal_weight: '', activity_level: '1.375' })
   const [goals, setGoals] = useState({})
   const [savedAt, setSavedAt] = useState(null)
   const [signingOut, setSigningOut] = useState(false)
@@ -31,26 +43,57 @@ export default function Profile() {
       supabase.from('profiles').select('*').eq('id', user.id).single(),
       supabase.from('gamification').select('level, total_xp').eq('user_id', user.id).single(),
       supabase.from('badges').select('badge_key, unlocked_at').eq('user_id', user.id),
-    ]).then(([p, g, b]) => {
+      supabase
+        .from('weight_logs')
+        .select('weight')
+        .eq('user_id', user.id)
+        .order('logged_date', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]).then(([p, g, b, w]) => {
       if (!active) return
-      setProfile(p.data)
+      const pr = p.data || {}
+      setProfile(pr)
       setGam(g.data)
-      setName(p.data?.display_name || '')
+      setName(pr.display_name || '')
+      setStats({
+        age: pr.age ?? '',
+        height_cm: pr.height_cm ?? '',
+        sex: pr.sex ?? '',
+        weight_goal_type: pr.weight_goal_type ?? '',
+        goal_weight: pr.goal_weight ?? '',
+        activity_level: String(pr.activity_level ?? '1.375'),
+      })
       setGoals({
-        calorie_goal: p.data?.calorie_goal ?? '',
-        protein_goal: p.data?.protein_goal ?? '',
-        carbs_goal: p.data?.carbs_goal ?? '',
-        fat_goal: p.data?.fat_goal ?? '',
+        calorie_goal: pr.calorie_goal ?? '',
+        protein_goal: pr.protein_goal ?? '',
+        carbs_goal: pr.carbs_goal ?? '',
+        fat_goal: pr.fat_goal ?? '',
       })
       const map = {}
       for (const row of b.data || []) map[row.badge_key] = row.unlocked_at
       setUnlocked(map)
+      setCurrentWeight(w.data?.weight ?? null)
       setLoading(false)
     })
     return () => {
       active = false
     }
   }, [user])
+
+  // Recommendation recalculates whenever stats or latest weight change.
+  const recommended = useMemo(
+    () =>
+      computeTargets({
+        sex: stats.sex,
+        age: Number(stats.age),
+        heightCm: Number(stats.height_cm),
+        weightKg: Number(currentWeight),
+        goalType: stats.weight_goal_type,
+        activity: Number(stats.activity_level) || 1.375,
+      }),
+    [stats, currentWeight]
+  )
 
   async function save(patch) {
     const { error } = await supabase.from('profiles').update(patch).eq('id', user.id)
@@ -60,13 +103,33 @@ export default function Profile() {
     }
   }
 
-  function saveGoals() {
+  function saveStat(key) {
+    const raw = stats[key]
+    let value = raw === '' ? null : raw
+    if (['age'].includes(key) && value != null) value = Math.round(Number(value))
+    if (['height_cm', 'goal_weight', 'activity_level'].includes(key) && value != null) value = Number(value)
+    save({ [key]: value })
+  }
+
+  function saveGoals(next = goals) {
     const patch = {}
     for (const f of GOAL_FIELDS) {
-      const v = goals[f.key]
+      const v = next[f.key]
       patch[f.key] = v === '' || v == null ? null : Math.round(Number(v))
     }
     save(patch)
+  }
+
+  function applyRecommended() {
+    if (!recommended) return
+    const next = {
+      calorie_goal: recommended.calories,
+      protein_goal: recommended.protein,
+      carbs_goal: recommended.carbs,
+      fat_goal: recommended.fat,
+    }
+    setGoals(next)
+    saveGoals(next)
   }
 
   async function handleSignOut() {
@@ -89,13 +152,10 @@ export default function Profile() {
     <div className="mx-auto max-w-md px-5 pt-6">
       <PageHeader title="Profile" />
 
-      {/* Identity card */}
+      {/* Identity */}
       <section className="rounded-2xl bg-surface-2 p-5 ring-1 ring-white/5">
         <div className="flex items-center gap-4">
-          <div
-            className="flex h-16 w-16 items-center justify-center rounded-full text-2xl font-bold text-surface"
-            style={{ backgroundColor: color }}
-          >
+          <div className="flex h-16 w-16 items-center justify-center rounded-full text-2xl font-bold text-surface" style={{ backgroundColor: color }}>
             {initial}
           </div>
           <div className="min-w-0 flex-1">
@@ -105,18 +165,13 @@ export default function Profile() {
               onBlur={() => name.trim() && name !== profile.display_name && save({ display_name: name.trim() })}
               className="w-full rounded-lg bg-transparent text-lg font-semibold text-white outline-none focus:bg-white/5 focus:px-2"
             />
-            <p className="truncate px-0 text-sm text-slate-400">{user?.email}</p>
+            <p className="truncate text-sm text-slate-400">{user?.email}</p>
           </div>
         </div>
-
         <div className="mt-4 flex items-center gap-3">
-          <span className="rounded-md bg-brand px-2 py-0.5 text-xs font-bold text-surface">
-            Level {gam?.level ?? 1}
-          </span>
+          <span className="rounded-md bg-brand px-2 py-0.5 text-xs font-bold text-surface">Level {gam?.level ?? 1}</span>
           <span className="text-sm text-slate-300">{(gam?.total_xp ?? 0).toLocaleString()} XP</span>
         </div>
-
-        {/* Avatar color */}
         <div className="mt-4">
           <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">Avatar color</p>
           <div className="flex gap-2">
@@ -125,15 +180,82 @@ export default function Profile() {
                 key={c}
                 onClick={() => save({ avatar_color: c })}
                 aria-label={`Set color ${c}`}
-                className={`h-8 w-8 rounded-full transition-transform active:scale-90 ${
-                  color === c ? 'ring-2 ring-white ring-offset-2 ring-offset-surface-2' : ''
-                }`}
+                className={`h-8 w-8 rounded-full transition-transform active:scale-90 ${color === c ? 'ring-2 ring-white ring-offset-2 ring-offset-surface-2' : ''}`}
                 style={{ backgroundColor: c }}
               />
             ))}
           </div>
         </div>
       </section>
+
+      {/* Body stats */}
+      <section className="mt-4 rounded-2xl bg-surface-2 p-5 ring-1 ring-white/5">
+        <h2 className="mb-3 text-sm font-semibold text-slate-200">Your stats</h2>
+        <div className="grid grid-cols-2 gap-3">
+          <StatField label="Age" value={stats.age} onChange={(v) => setStats((s) => ({ ...s, age: v }))} onBlur={() => saveStat('age')} />
+          <StatField label="Height (cm)" value={stats.height_cm} onChange={(v) => setStats((s) => ({ ...s, height_cm: v }))} onBlur={() => saveStat('height_cm')} />
+          <StatField label="Goal weight (kg)" value={stats.goal_weight} onChange={(v) => setStats((s) => ({ ...s, goal_weight: v }))} onBlur={() => saveStat('goal_weight')} />
+          <div>
+            <span className="mb-1 block text-xs text-slate-400">Current weight</span>
+            <div className="rounded-xl bg-white/5 px-3 py-2.5 text-base text-slate-300 ring-1 ring-white/10">
+              {currentWeight != null ? `${currentWeight} kg` : '—'}
+            </div>
+          </div>
+        </div>
+
+        <p className="mb-1.5 mt-3 text-xs text-slate-400">Sex</p>
+        <div className="grid grid-cols-2 gap-2">
+          {['male', 'female'].map((s) => (
+            <Toggle key={s} active={stats.sex === s} onClick={() => { setStats((p) => ({ ...p, sex: s })); save({ sex: s }) }}>
+              {s === 'male' ? 'Male' : 'Female'}
+            </Toggle>
+          ))}
+        </div>
+
+        <p className="mb-1.5 mt-3 text-xs text-slate-400">Goal</p>
+        <div className="grid grid-cols-3 gap-2">
+          {['lose', 'maintain', 'gain'].map((g) => (
+            <Toggle key={g} active={stats.weight_goal_type === g} onClick={() => { setStats((p) => ({ ...p, weight_goal_type: g })); save({ weight_goal_type: g }) }}>
+              {g[0].toUpperCase() + g.slice(1)}
+            </Toggle>
+          ))}
+        </div>
+
+        <p className="mb-1.5 mt-3 text-xs text-slate-400">Activity level</p>
+        <div className="grid grid-cols-4 gap-2">
+          {ACTIVITY.map(([val, label]) => (
+            <Toggle key={val} active={stats.activity_level === val} onClick={() => { setStats((p) => ({ ...p, activity_level: val })); save({ activity_level: Number(val) }) }}>
+              {label}
+            </Toggle>
+          ))}
+        </div>
+      </section>
+
+      {/* Smart recommendation */}
+      {recommended && (
+        <section className="mt-4 rounded-2xl bg-gradient-to-br from-brand/15 to-surface-2 p-5 ring-1 ring-brand/25">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-white">Recommended targets ✨</h2>
+            <span className="text-[11px] text-slate-400">Mifflin-St Jeor</span>
+          </div>
+          <div className="mt-3 grid grid-cols-4 gap-2 text-center">
+            {[
+              ['Cal', recommended.calories],
+              ['Protein', `${recommended.protein}g`],
+              ['Carbs', `${recommended.carbs}g`],
+              ['Fat', `${recommended.fat}g`],
+            ].map(([l, v]) => (
+              <div key={l} className="rounded-xl bg-black/20 py-2">
+                <p className="text-base font-bold text-white">{v}</p>
+                <p className="text-[10px] uppercase tracking-wide text-slate-400">{l}</p>
+              </div>
+            ))}
+          </div>
+          <button onClick={applyRecommended} className="mt-3 w-full rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-surface active:bg-brand-dark">
+            Use recommended
+          </button>
+        </section>
+      )}
 
       {/* Goals */}
       <section className="mt-4 rounded-2xl bg-surface-2 p-5 ring-1 ring-white/5">
@@ -152,48 +274,37 @@ export default function Profile() {
                 inputMode="numeric"
                 value={goals[f.key]}
                 onChange={(e) => setGoals((g) => ({ ...g, [f.key]: e.target.value }))}
-                onBlur={saveGoals}
+                onBlur={() => saveGoals()}
                 className="w-full rounded-xl bg-white/5 px-3 py-2.5 text-base text-white outline-none ring-1 ring-white/10 focus:ring-brand"
               />
             </label>
           ))}
         </div>
-        <button
-          onClick={saveGoals}
-          className="mt-3 w-full rounded-xl bg-brand/15 px-4 py-2.5 text-sm font-semibold text-brand active:bg-brand/25"
-        >
-          Save goals
-        </button>
       </section>
 
       {/* Trophy shelf */}
       <section className="mt-4">
         <h2 className="mb-2 px-1 text-sm font-semibold text-slate-200">Badges</h2>
         <div className="grid grid-cols-2 gap-3">
-          {BADGES.map((b) => {
+          {BADGES.map((b, i) => {
             const date = unlocked[b.key]
             const isUnlocked = Boolean(date)
             return (
-              <div
+              <motion.div
                 key={b.key}
-                className={`rounded-2xl p-4 ring-1 ${
-                  isUnlocked
-                    ? 'bg-surface-2 ring-brand/30'
-                    : 'bg-surface-2/40 ring-white/5'
-                }`}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: Math.min(i * 0.04, 0.3) }}
+                className={`rounded-2xl p-4 ring-1 ${isUnlocked ? 'bg-surface-2 ring-brand/30' : 'bg-surface-2/40 ring-white/5'}`}
               >
                 <div className={`text-3xl ${isUnlocked ? '' : 'opacity-30 grayscale'}`}>{b.icon}</div>
-                <p className={`mt-1.5 text-sm font-semibold ${isUnlocked ? 'text-white' : 'text-slate-500'}`}>
-                  {b.name}
-                </p>
+                <p className={`mt-1.5 text-sm font-semibold ${isUnlocked ? 'text-white' : 'text-slate-500'}`}>{b.name}</p>
                 {isUnlocked ? (
-                  <p className="text-[11px] text-brand">
-                    {new Date(date).toLocaleDateString()}
-                  </p>
+                  <p className="text-[11px] text-brand">{new Date(date).toLocaleDateString()}</p>
                 ) : (
                   <p className="text-[11px] text-slate-600">{b.condition}</p>
                 )}
-              </div>
+              </motion.div>
             )
           })}
         </div>
@@ -207,5 +318,32 @@ export default function Profile() {
         {signingOut ? 'Signing out…' : 'Sign out'}
       </button>
     </div>
+  )
+}
+
+function StatField({ label, value, onChange, onBlur }) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-xs text-slate-400">{label}</span>
+      <input
+        type="number"
+        inputMode="decimal"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
+        className="w-full rounded-xl bg-white/5 px-3 py-2.5 text-base text-white outline-none ring-1 ring-white/10 focus:ring-brand"
+      />
+    </label>
+  )
+}
+
+function Toggle({ active, onClick, children }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`rounded-xl py-2 text-xs font-semibold transition-colors ${active ? 'bg-brand text-surface' : 'bg-white/5 text-slate-300 active:bg-white/10'}`}
+    >
+      {children}
+    </button>
   )
 }

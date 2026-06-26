@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase.js'
 import { useAuth } from '../auth/AuthContext.jsx'
 
@@ -15,6 +15,7 @@ export function todayLocalISO() {
  */
 export function useDashboardData() {
   const { user } = useAuth()
+  const [reloadKey, setReloadKey] = useState(0)
   const [state, setState] = useState({
     loading: true,
     error: null,
@@ -22,6 +23,8 @@ export function useDashboardData() {
     gamification: null,
     logs: [],
   })
+
+  const refresh = useCallback(() => setReloadKey((k) => k + 1), [])
 
   useEffect(() => {
     if (!user) return
@@ -64,7 +67,7 @@ export function useDashboardData() {
     return () => {
       active = false
     }
-  }, [user])
+  }, [user, reloadKey])
 
-  return state
+  return { ...state, refresh }
 }

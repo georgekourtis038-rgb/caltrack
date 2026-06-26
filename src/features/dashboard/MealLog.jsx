@@ -11,7 +11,7 @@ const MEALS = [
 /**
  * Today's food entries grouped by meal type. Hides empty groups.
  */
-export default function MealLog({ logs }) {
+export default function MealLog({ logs, onSelect }) {
   if (!logs.length) {
     return (
       <Link
@@ -46,16 +46,21 @@ export default function MealLog({ logs }) {
             </div>
             <ul className="divide-y divide-white/5 overflow-hidden rounded-2xl bg-surface-2 ring-1 ring-white/5">
               {group.items.map((item) => (
-                <li key={item.id} className="flex items-center justify-between gap-3 px-4 py-3">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-white">{item.food_name}</p>
-                    {item.serving_size && (
-                      <p className="truncate text-xs text-slate-500">{item.serving_size}</p>
-                    )}
-                  </div>
-                  <span className="shrink-0 text-sm font-semibold text-slate-300">
-                    {Math.round(item.calories ?? 0)}
-                  </span>
+                <li key={item.id}>
+                  <button
+                    onClick={() => onSelect?.(item)}
+                    className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors active:bg-white/5"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-white">{item.food_name}</p>
+                      {item.serving_size && (
+                        <p className="truncate text-xs text-slate-500">{item.serving_size}</p>
+                      )}
+                    </div>
+                    <span className="shrink-0 text-sm font-semibold text-slate-300">
+                      {Math.round(item.calories ?? 0)}
+                    </span>
+                  </button>
                 </li>
               ))}
             </ul>

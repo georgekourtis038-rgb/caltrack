@@ -1,10 +1,13 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { motion } from 'framer-motion'
 import { useDashboardData } from './useDashboardData.js'
 import CalorieRing from './CalorieRing.jsx'
 import MacroBar from './MacroBar.jsx'
 import StatsStrip from './StatsStrip.jsx'
 import MealLog from './MealLog.jsx'
 import DashboardSkeleton from './DashboardSkeleton.jsx'
+import EditLogSheet from '../log-food/EditLogSheet.jsx'
 
 function greeting() {
   const h = new Date().getHours()
@@ -16,7 +19,8 @@ function greeting() {
 const sum = (logs, key) => logs.reduce((t, l) => t + (Number(l[key]) || 0), 0)
 
 export default function Dashboard() {
-  const { loading, error, profile, gamification, logs } = useDashboardData()
+  const { loading, error, profile, gamification, logs, refresh } = useDashboardData()
+  const [editing, setEditing] = useState(null)
 
   if (loading) return <DashboardSkeleton />
 
@@ -59,9 +63,14 @@ export default function Dashboard() {
       />
 
       {/* Calorie ring */}
-      <section className="mt-6">
+      <motion.section
+        className="mt-6"
+        initial={{ opacity: 0, scale: 0.94 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ type: 'spring', stiffness: 220, damping: 22 }}
+      >
         <CalorieRing consumed={consumed} goal={calorieGoal} />
-      </section>
+      </motion.section>
 
       {/* Macros */}
       <section className="mt-6 space-y-3 rounded-2xl bg-surface-2 p-4 ring-1 ring-white/5">
@@ -73,19 +82,33 @@ export default function Dashboard() {
       {/* Today's meals */}
       <section className="mt-6">
         <h2 className="mb-2 px-1 text-sm font-semibold text-slate-300">Today’s log</h2>
-        <MealLog logs={logs} />
+        <MealLog logs={logs} onSelect={setEditing} />
       </section>
 
       {/* Floating add button */}
-      <Link
-        to="/log"
-        aria-label="Log food"
-        className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-brand text-surface shadow-lg shadow-brand/30 transition-transform active:scale-95"
+      <motion.div
+        className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-5 z-40"
+        whileTap={{ scale: 0.9 }}
       >
-        <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
-          <path d="M12 5v14M5 12h14" />
-        </svg>
-      </Link>
+        <Link
+          to="/log"
+          aria-label="Log food"
+          className="flex h-14 w-14 items-center justify-center rounded-full bg-brand text-surface shadow-lg shadow-brand/30"
+        >
+          <svg className="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+            <path d="M12 5v14M5 12h14" />
+          </svg>
+        </Link>
+      </motion.div>
+
+      <EditLogSheet
+        log={editing}
+        onClose={() => setEditing(null)}
+        onChanged={() => {
+          setEditing(null)
+          refresh()
+        }}
+      />
     </div>
   )
 }

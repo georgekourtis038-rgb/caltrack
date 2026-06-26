@@ -13,15 +13,18 @@ import {
 } from 'recharts'
 import PageHeader from '../../components/PageHeader.jsx'
 import { useAuth } from '../auth/AuthContext.jsx'
+import { useCelebrate } from '../celebrate/CelebrationProvider.jsx'
 import { supabase } from '../../lib/supabase.js'
 import { groupByDay } from '../../lib/nutrition.js'
-import { lastNDates, todayISO } from '../../lib/dates.js'
+import { lastNDates } from '../../lib/dates.js'
+import { logWeight, isStagnating } from './weightLog.js'
 
 const weekday = (iso) =>
   new Date(`${iso}T12:00:00`).toLocaleDateString(undefined, { weekday: 'short' })
 
 export default function Progress() {
   const { user } = useAuth()
+  const { celebrateXp } = useCelebrate()
   const [loading, setLoading] = useState(true)
   const [goal, setGoal] = useState(2000)
   const [chart, setChart] = useState([])
@@ -82,6 +85,7 @@ export default function Progress() {
 
     setWeights(
       (weightRes.data || []).map((w) => ({
+        date: w.logged_date,
         label: new Date(`${w.logged_date}T12:00:00`).toLocaleDateString(undefined, {
           month: 'short',
           day: 'numeric',
@@ -102,12 +106,11 @@ export default function Progress() {
     const value = Number(weightInput)
     if (!value || value <= 0) return
     setSavingWeight(true)
-    await supabase
-      .from('weight_logs')
-      .insert({ user_id: user.id, weight: value, logged_date: todayISO() })
+    const { bonusXp } = await logWeight(user.id, value)
     setWeightInput('')
     setWeighOpen(false)
     setSavingWeight(false)
+    if (bonusXp) celebrateXp(bonusXp, 'XP · toward goal!')
     load()
   }
 
@@ -122,6 +125,13 @@ export default function Progress() {
   return (
     <div className="mx-auto max-w-md px-5 pt-6">
       <PageHeader title="Progress" subtitle="Last 7 days" />
+
+      {isStagnating(weights) && (
+        <div className="mb-4 rounded-2xl bg-amber-400/10 px-4 py-3 text-sm text-amber-200 ring-1 ring-amber-400/20">
+          👋 Your weight has held steady for 2+ weeks. A small tweak to your goals or intake could
+          get things moving again.
+        </div>
+      )}
 
       {/* Calorie chart */}
       <section className="rounded-2xl bg-surface-2 p-4 ring-1 ring-white/5">

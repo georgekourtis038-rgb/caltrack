@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { motion } from 'framer-motion'
 
 const tabs = [
   { to: '/dashboard', label: 'Home', icon: HomeIcon },
@@ -18,14 +19,23 @@ export default function BottomNav() {
               to={to}
               className={({ isActive }) =>
                 [
-                  'flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-colors',
+                  'relative flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-colors',
                   isActive ? 'text-brand' : 'text-slate-400 active:text-slate-200',
                 ].join(' ')
               }
             >
               {({ isActive }) => (
                 <>
-                  <Icon className="h-6 w-6" filled={isActive} />
+                  {isActive && (
+                    <motion.span
+                      layoutId="navIndicator"
+                      className="absolute -top-px h-0.5 w-7 rounded-full bg-brand"
+                      transition={{ type: 'spring', stiffness: 500, damping: 32 }}
+                    />
+                  )}
+                  <motion.span whileTap={{ scale: 0.82 }} animate={{ y: isActive ? -1 : 0 }}>
+                    <Icon className="h-6 w-6" filled={isActive} />
+                  </motion.span>
                   <span>{label}</span>
                 </>
               )}

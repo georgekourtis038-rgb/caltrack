@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuth } from './features/auth/AuthContext.jsx'
-import AuthScreen from './features/auth/AuthScreen.jsx'
+import Onboarding from './features/onboarding/Onboarding.jsx'
 import BottomNav from './components/BottomNav.jsx'
 import Dashboard from './features/dashboard/Dashboard.jsx'
 import LogFood from './features/log-food/LogFood.jsx'
@@ -31,11 +31,11 @@ export default function App() {
     )
   }
 
-  // Not signed in → gate the whole app behind the auth screen.
+  // Not signed in → premium onboarding flow (ends in sign up / log in).
   if (!user) {
     return (
       <div className="h-full bg-surface">
-        <AuthScreen />
+        <Onboarding />
       </div>
     )
   }

@@ -54,11 +54,14 @@ export async function logFoodEntry(userId, entry) {
   await awardXp(userId, today)
 
   // Badges are a nice-to-have side effect — never let them block a log.
+  let badges = []
   try {
-    await evaluateBadges(userId)
+    badges = await evaluateBadges(userId)
   } catch (e) {
     console.error('Badge evaluation failed:', e)
   }
+
+  return { xp: XP_PER_MEAL, badges }
 }
 
 async function awardXp(userId, today) {

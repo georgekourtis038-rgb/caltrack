@@ -5,6 +5,18 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
+  build: {
+    chunkSizeWarningLimit: 800,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Split heavy, rarely-changing libs so app-code edits don't bust their cache.
+          motion: ['framer-motion'],
+          vendor: ['react', 'react-dom', 'react-router-dom', '@supabase/supabase-js'],
+        },
+      },
+    },
+  },
   plugins: [
     react(),
     tailwindcss(),

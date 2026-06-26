@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import BottomSheet from './BottomSheet.jsx'
 import MealTypePicker from './MealTypePicker.jsx'
 import { useAuth } from '../auth/AuthContext.jsx'
+import { useCelebrate } from '../celebrate/CelebrationProvider.jsx'
 import { logFoodEntry, mealTypeForNow } from './logFood.js'
 
 const EMPTY = { name: '', calories: '', protein: '', carbs: '', fat: '' }
@@ -11,6 +12,7 @@ const EMPTY = { name: '', calories: '', protein: '', carbs: '', fat: '' }
  */
 export default function ManualEntrySheet({ open, onClose, onLogged }) {
   const { user } = useAuth()
+  const { celebrateXp, celebrateBadges } = useCelebrate()
   const [form, setForm] = useState(EMPTY)
   const [meal, setMeal] = useState(mealTypeForNow())
   const [saving, setSaving] = useState(false)
@@ -32,7 +34,7 @@ export default function ManualEntrySheet({ open, onClose, onLogged }) {
     setSaving(true)
     setError(null)
     try {
-      await logFoodEntry(user.id, {
+      const result = await logFoodEntry(user.id, {
         food_name: form.name.trim(),
         meal_type: meal,
         calories: Math.round(Number(form.calories) || 0),
@@ -41,6 +43,8 @@ export default function ManualEntrySheet({ open, onClose, onLogged }) {
         fat: Number(form.fat) || 0,
         serving_size: null,
       })
+      celebrateXp(result.xp)
+      celebrateBadges(result.badges)
       onLogged()
     } catch (e) {
       setError(e.message)
