@@ -10,11 +10,11 @@ const USDA_URL = 'https://api.nal.usda.gov/fdc/v1/foods/search'
 
 export const config = { maxDuration: 15 }
 
-// USDA nutrient numbers.
-const NUTRIENT = { calories: '1008', protein: '1003', fat: '1004', carbs: '1005' }
+// USDA nutrient IDs (NOT nutrientNumber — those are legacy codes like "208").
+const NUTRIENT = { calories: 1008, protein: 1003, fat: 1004, carbs: 1005 }
 
-function nutrientValue(food, number) {
-  const n = (food.foodNutrients || []).find((x) => x.nutrientNumber === number)
+function nutrientValue(food, id) {
+  const n = (food.foodNutrients || []).find((x) => x.nutrientId === id)
   return n && typeof n.value === 'number' ? n.value : null
 }
 
