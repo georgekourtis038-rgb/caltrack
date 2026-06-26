@@ -3,7 +3,11 @@
 //
 // GET /api/food-search?q=chicken  ->  { products: [...] }
 
-const OFF_URL = 'https://world.openfoodfacts.org/cgi/search.pl'
+// OFF v2 search endpoint — faster and more reliable than the legacy cgi/search.pl.
+const OFF_URL = 'https://world.openfoodfacts.org/api/v2/search'
+
+// Allow the function up to 15s on Vercel (default would cut us off sooner).
+export const config = { maxDuration: 15 }
 
 export default async function handler(req, res) {
   const q = (req.query.q || '').toString().trim()
@@ -15,16 +19,13 @@ export default async function handler(req, res) {
   const url = new URL(OFF_URL)
   url.search = new URLSearchParams({
     search_terms: q,
-    search_simple: '1',
-    action: 'process',
-    json: '1',
     page_size: '20',
     fields: 'code,product_name,brands,serving_size,nutriments',
   }).toString()
 
   // Don't let a slow upstream hang the function.
   const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 8000)
+  const timeout = setTimeout(() => controller.abort(), 15000)
 
   try {
     const offRes = await fetch(url, {
