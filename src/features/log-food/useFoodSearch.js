@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { normalizeProduct } from './food.js'
 
-const SEARCH_URL = 'https://world.openfoodfacts.org/cgi/search.pl'
+// Our own serverless proxy (api/food-search.js) — avoids OFF CORS issues.
+const SEARCH_URL = '/api/food-search'
 
 /**
- * Debounced Open Food Facts search. Cancels in-flight requests when the
- * query changes. Only searches once the query is at least 2 chars.
+ * Debounced food search via our serverless proxy. Cancels in-flight
+ * requests when the query changes. Only searches once the query is >= 2 chars.
  */
 export function useFoodSearch(query) {
   const [state, setState] = useState({ results: [], loading: false, error: null })
@@ -22,15 +23,8 @@ export function useFoodSearch(query) {
 
     const timer = setTimeout(async () => {
       try {
-        const url = new URL(SEARCH_URL)
-        url.search = new URLSearchParams({
-          search_terms: q,
-          search_simple: '1',
-          action: 'process',
-          json: '1',
-          page_size: '20',
-          fields: 'code,product_name,brands,serving_size,nutriments',
-        }).toString()
+        const url = new URL(SEARCH_URL, window.location.origin)
+        url.searchParams.set('q', q)
 
         const res = await fetch(url, { signal: controller.signal })
         if (!res.ok) throw new Error(`Search failed (${res.status})`)
