@@ -125,13 +125,13 @@ export default function LogFood() {
         {!loading && results.length > 0 && (
           <ul className="space-y-2">
             {results.map((food) => (
-              <li key={food.code}>
+              <li key={food.fdcId}>
                 <button
                   onClick={() => setSelected(food)}
                   className="flex w-full items-center justify-between gap-3 rounded-xl bg-surface-2 px-4 py-3 text-left ring-1 ring-white/5 transition-colors active:bg-white/5"
                 >
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-white">{food.name}</p>
+                    <p className="truncate text-sm font-medium text-white">{food.food_name}</p>
                     {food.brand && <p className="truncate text-xs text-slate-500">{food.brand}</p>}
                   </div>
                   <span className="shrink-0 text-xs font-semibold text-slate-300">

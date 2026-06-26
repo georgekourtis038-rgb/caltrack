@@ -6,10 +6,11 @@ import { logFoodEntry, mealTypeForNow } from './logFood.js'
 
 const r0 = (n) => Math.round(n || 0)
 const r1 = (n) => Math.round((n || 0) * 10) / 10
+const GRAM_PRESETS = [50, 100, 150, 200]
 
 /**
- * Bottom sheet showing a searched food's nutrition with a serving-basis
- * selector, quantity stepper, and meal picker. Confirm saves to food_logs.
+ * Bottom sheet showing a searched food's nutrition (per 100 g from USDA),
+ * with a gram-amount selector and meal picker. Confirm saves to food_logs.
  *
  * `food` is the normalized food (null when closed). We retain the last
  * non-null food so content stays visible during the slide-down.
@@ -17,8 +18,7 @@ const r1 = (n) => Math.round((n || 0) * 10) / 10
 export default function FoodDetailSheet({ food, onClose, onLogged }) {
   const { user } = useAuth()
   const [shown, setShown] = useState(food)
-  const [basis, setBasis] = useState('100g') // 'serving' | '100g'
-  const [qty, setQty] = useState(1)
+  const [grams, setGrams] = useState(100)
   const [meal, setMeal] = useState(mealTypeForNow())
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState(null)
@@ -27,8 +27,7 @@ export default function FoodDetailSheet({ food, onClose, onLogged }) {
   useEffect(() => {
     if (!food) return
     setShown(food)
-    setBasis(food.perServing ? 'serving' : '100g')
-    setQty(1)
+    setGrams(100)
     setMeal(mealTypeForNow())
     setSaving(false)
     setError(null)
@@ -39,28 +38,26 @@ export default function FoodDetailSheet({ food, onClose, onLogged }) {
 
   if (!f) return <BottomSheet open={open} onClose={onClose} />
 
-  const base = basis === 'serving' && f.perServing ? f.perServing : f.per100g
+  const factor = grams / 100
   const totals = {
-    calories: r0((base.calories || 0) * qty),
-    protein: r1((base.protein || 0) * qty),
-    carbs: r1((base.carbs || 0) * qty),
-    fat: r1((base.fat || 0) * qty),
+    calories: r0((f.calories || 0) * factor),
+    protein: r1((f.protein || 0) * factor),
+    carbs: r1((f.carbs || 0) * factor),
+    fat: r1((f.fat || 0) * factor),
   }
-  const unitLabel =
-    basis === 'serving' ? (f.servingSize ? `serving (${f.servingSize})` : 'serving') : '100 g'
 
   async function confirm() {
     setSaving(true)
     setError(null)
     try {
       await logFoodEntry(user.id, {
-        food_name: f.name,
+        food_name: f.food_name,
         meal_type: meal,
         calories: totals.calories,
         protein: totals.protein,
         carbs: totals.carbs,
         fat: totals.fat,
-        serving_size: `${qty} × ${unitLabel}`,
+        serving_size: `${grams} g`,
       })
       onLogged()
     } catch (e) {
@@ -72,10 +69,13 @@ export default function FoodDetailSheet({ food, onClose, onLogged }) {
   return (
     <BottomSheet open={open} onClose={saving ? undefined : onClose}>
       <div className="pb-2">
-        <h2 className="text-lg font-bold leading-tight text-white">{f.name}</h2>
+        <h2 className="text-lg font-bold leading-tight text-white">{f.food_name}</h2>
         {f.brand && <p className="text-sm text-slate-400">{f.brand}</p>}
+        {f.serving_size && (
+          <p className="mt-0.5 text-xs text-slate-500">Label serving: {f.serving_size}</p>
+        )}
 
-        {/* Nutrition summary */}
+        {/* Nutrition summary (for the chosen amount) */}
         <div className="mt-4 grid grid-cols-4 gap-2 text-center">
           <Nutrient label="Cal" value={totals.calories} accent />
           <Nutrient label="Protein" value={`${totals.protein}g`} />
@@ -83,27 +83,31 @@ export default function FoodDetailSheet({ food, onClose, onLogged }) {
           <Nutrient label="Fat" value={`${totals.fat}g`} />
         </div>
 
-        {/* Serving basis */}
+        {/* Amount */}
         <p className="mt-5 mb-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">
-          Serving
+          Amount
         </p>
-        <div className="grid grid-cols-2 gap-2">
-          <BasisButton active={basis === 'serving'} disabled={!f.perServing} onClick={() => setBasis('serving')}>
-            Per serving{f.servingSize ? ` · ${f.servingSize}` : ''}
-          </BasisButton>
-          <BasisButton active={basis === '100g'} onClick={() => setBasis('100g')}>
-            Per 100 g
-          </BasisButton>
-        </div>
-
-        {/* Quantity */}
-        <div className="mt-3 flex items-center justify-between rounded-xl bg-white/5 px-4 py-2.5">
-          <span className="text-sm text-slate-300">Quantity</span>
+        <div className="flex items-center justify-between rounded-xl bg-white/5 px-4 py-2.5">
+          <span className="text-sm text-slate-300">Grams</span>
           <div className="flex items-center gap-4">
-            <Stepper label="−" onClick={() => setQty((q) => Math.max(0.5, r1(q - 0.5)))} />
-            <span className="w-10 text-center text-base font-semibold text-white">{qty}</span>
-            <Stepper label="+" onClick={() => setQty((q) => r1(q + 0.5))} />
+            <Stepper label="−" onClick={() => setGrams((g) => Math.max(10, g - 10))} />
+            <span className="w-12 text-center text-base font-semibold text-white">{grams}</span>
+            <Stepper label="+" onClick={() => setGrams((g) => g + 10)} />
           </div>
+        </div>
+        <div className="mt-2 grid grid-cols-4 gap-2">
+          {GRAM_PRESETS.map((g) => (
+            <button
+              key={g}
+              type="button"
+              onClick={() => setGrams(g)}
+              className={`rounded-lg py-1.5 text-xs font-semibold transition-colors ${
+                grams === g ? 'bg-brand text-surface' : 'bg-white/5 text-slate-300 active:bg-white/10'
+              }`}
+            >
+              {g}g
+            </button>
+          ))}
         </div>
 
         {/* Meal type */}
@@ -132,21 +136,6 @@ function Nutrient({ label, value, accent }) {
       <p className={`text-lg font-bold ${accent ? 'text-brand' : 'text-white'}`}>{value}</p>
       <p className="text-[10px] uppercase tracking-wide text-slate-500">{label}</p>
     </div>
-  )
-}
-
-function BasisButton({ active, disabled, onClick, children }) {
-  return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className={`rounded-xl px-3 py-2.5 text-xs font-semibold transition-colors ${
-        active ? 'bg-brand text-surface' : 'bg-white/5 text-slate-300 active:bg-white/10'
-      } disabled:opacity-30`}
-    >
-      {children}
-    </button>
   )
 }
 

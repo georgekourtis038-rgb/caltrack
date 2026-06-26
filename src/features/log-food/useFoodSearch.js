@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
-import { normalizeProduct } from './food.js'
 
-// Our own serverless proxy (api/food-search.js) — avoids OFF CORS issues.
+// Our own serverless proxy (api/food-search.js) — calls USDA FoodData Central.
 const SEARCH_URL = '/api/food-search'
 
 /**
@@ -30,9 +29,10 @@ export function useFoodSearch(query) {
         if (!res.ok) throw new Error(`Search failed (${res.status})`)
         const data = await res.json()
 
-        const results = (data.products || [])
-          .map(normalizeProduct)
-          .filter((p) => p.name && p.per100g.calories != null)
+        // Proxy already returns normalized foods; keep ones with a name + calories.
+        const results = (data.products || []).filter(
+          (p) => p.food_name && p.calories != null
+        )
 
         setState({ results, loading: false, error: null })
       } catch (e) {
