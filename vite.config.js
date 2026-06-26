@@ -41,17 +41,12 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Precache only the local app shell/assets. No runtimeCaching, so
+        // cross-origin API calls (Open Food Facts, Supabase, Anthropic) are
+        // never intercepted by the service worker and go straight to the network.
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: ({ url }) => url.origin === 'https://world.openfoodfacts.org',
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'off-api',
-              expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 },
-            },
-          },
-        ],
+        // SPA navigation fallback should never shadow API/auth requests.
+        navigateFallbackDenylist: [/^\/api/, /^\/auth/],
       },
       devOptions: {
         enabled: true,
