@@ -1,10 +1,30 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-brand: #22c55e;
-  --color-brand-dark: #16a34a;
-  --color-surface: #0f172a;
-  --color-surface-2: #1e293b;
+  /* Typography — Space Grotesk for display, Inter for body */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: 'Space Grotesk', 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  /* Surfaces — layered obsidian */
+  --color-surface: #0a0b0e;
+  --color-surface-2: #14161d;
+  --color-surface-3: #1d212b;
+
+  /* Accents */
+  --color-brand: #cbfb45; /* luminous lime */
+  --color-brand-dark: #b4e635;
+  --color-gold: #f3c969; /* champagne — reward / premium */
+
+  /* Macro / data viz */
+  --color-protein: #5cc8ff;
+  --color-carbs: #f4b740;
+  --color-fat: #f4719c;
+
+  /* Text */
+  --color-ink: #f5f6f8;
+  --color-muted: #8b92a1;
+  --color-faint: #59606e;
+  --color-danger: #fb6f92;
 }
 
 :root {
@@ -19,13 +39,43 @@ body,
 
 body {
   margin: 0;
-  background-color: var(--color-surface);
-  color: #e2e8f0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
-    Arial, sans-serif;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  /* Subtle lime glow from the top — premium depth without clutter */
+  background:
+    radial-gradient(125% 85% at 50% -12%, rgba(203, 251, 69, 0.07), transparent 55%),
+    var(--color-surface);
+  background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
-  /* Prevent rubber-band scroll behind fixed nav on iOS */
+  text-rendering: optimizeLegibility;
   overscroll-behavior-y: none;
+}
+
+/* Display font + tight tracking for headings */
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+/* Tabular figures for stats so numbers don't jitter */
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+::selection {
+  background: var(--color-brand);
+  color: var(--color-surface);
+}
+
+/* Slim, unobtrusive scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
 }
 
 /* iOS safe-area helpers */

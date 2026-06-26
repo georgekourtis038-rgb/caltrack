@@ -51,8 +51,8 @@ export default function Dashboard() {
   return (
     <div className="mx-auto max-w-md px-5 pt-6">
       <header className="mb-4">
-        <p className="text-sm text-slate-400">{greeting()},</p>
-        <h1 className="text-2xl font-bold tracking-tight text-white">{firstName}</h1>
+        <p className="text-sm text-muted">{greeting()},</p>
+        <h1 className="font-display text-[28px] font-bold capitalize text-white">{firstName}</h1>
       </header>
 
       {/* Gamification */}

@@ -232,30 +232,44 @@ export default function Profile() {
       </section>
 
       {/* Smart recommendation */}
-      {recommended && (
-        <section className="mt-4 rounded-2xl bg-gradient-to-br from-brand/15 to-surface-2 p-5 ring-1 ring-brand/25">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-white">Recommended targets ✨</h2>
-            <span className="text-[11px] text-slate-400">Mifflin-St Jeor</span>
-          </div>
-          <div className="mt-3 grid grid-cols-4 gap-2 text-center">
-            {[
-              ['Cal', recommended.calories],
-              ['Protein', `${recommended.protein}g`],
-              ['Carbs', `${recommended.carbs}g`],
-              ['Fat', `${recommended.fat}g`],
-            ].map(([l, v]) => (
-              <div key={l} className="rounded-xl bg-black/20 py-2">
-                <p className="text-base font-bold text-white">{v}</p>
-                <p className="text-[10px] uppercase tracking-wide text-slate-400">{l}</p>
-              </div>
-            ))}
-          </div>
-          <button onClick={applyRecommended} className="mt-3 w-full rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-surface active:bg-brand-dark">
-            Use recommended
-          </button>
-        </section>
-      )}
+      <section className="mt-4 rounded-2xl bg-gradient-to-br from-brand/15 to-surface-2 p-5 ring-1 ring-brand/25">
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-base font-bold text-white">Smart targets</h2>
+          <span className="rounded-md bg-brand/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand">
+            Auto
+          </span>
+        </div>
+        {recommended ? (
+          <>
+            <p className="mt-1 text-xs text-muted">Calculated from your stats (Mifflin-St Jeor).</p>
+            <div className="mt-3 grid grid-cols-4 gap-2 text-center">
+              {[
+                ['Cal', recommended.calories],
+                ['Protein', `${recommended.protein}g`],
+                ['Carbs', `${recommended.carbs}g`],
+                ['Fat', `${recommended.fat}g`],
+              ].map(([l, v]) => (
+                <div key={l} className="rounded-xl bg-black/25 py-2">
+                  <p className="tnum font-display text-base font-bold text-white">{v}</p>
+                  <p className="text-[10px] uppercase tracking-wide text-faint">{l}</p>
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={applyRecommended}
+              className="mt-3 w-full rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-surface shadow-lg shadow-brand/20 active:bg-brand-dark"
+            >
+              Use these targets
+            </button>
+          </>
+        ) : (
+          <p className="mt-2 text-sm text-muted">
+            Add your <span className="text-slate-200">sex, age, height</span>
+            {currentWeight == null && <> and log a <span className="text-slate-200">weight</span></>} above, and
+            we'll auto-calculate your ideal calories and macros.
+          </p>
+        )}
+      </section>
 
       {/* Goals */}
       <section className="mt-4 rounded-2xl bg-surface-2 p-5 ring-1 ring-white/5">

@@ -1,9 +1,7 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useAuth } from '../auth/AuthContext.jsx'
-import { supabase } from '../../lib/supabase.js'
-import { computeTargets } from '../../lib/targets.js'
-import { todayISO } from '../../lib/dates.js'
+import { savePendingOnboarding } from './pendingOnboarding.js'
 
 const TOTAL_STEPS = 8 // 0..6 are onboarding slides, 7 is auth
 
@@ -139,7 +137,7 @@ export default function Onboarding() {
           <button
             onClick={() => go(step + 1)}
             disabled={!canContinue}
-            className="flex-1 rounded-xl bg-brand px-5 py-3.5 text-base font-semibold text-surface transition active:bg-brand-dark disabled:opacity-40"
+            className="flex-1 rounded-xl bg-brand px-5 py-3.5 text-base font-semibold text-surface shadow-lg shadow-brand/20 transition active:bg-brand-dark disabled:opacity-40 disabled:shadow-none"
           >
             {step === 6 ? 'Get started' : 'Continue'}
           </button>
@@ -156,7 +154,7 @@ function Welcome() {
         initial={{ scale: 0.5, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-        className="mb-6 flex h-24 w-24 items-center justify-center rounded-3xl bg-brand/15 text-6xl"
+        className="mb-6 flex h-24 w-24 items-center justify-center rounded-[28px] bg-gradient-to-br from-brand/25 to-brand/5 text-6xl ring-1 ring-brand/20"
       >
         🔥
       </motion.div>
@@ -164,7 +162,7 @@ function Welcome() {
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.15 }}
-        className="text-4xl font-black tracking-tight text-white"
+        className="font-display text-5xl font-bold tracking-tight text-white"
       >
         CalTrack
       </motion.h1>
@@ -183,7 +181,7 @@ function Welcome() {
 function BattlePeek({ name }) {
   return (
     <div className="flex flex-1 flex-col justify-center">
-      <h2 className="text-center text-2xl font-bold text-white">Better together</h2>
+      <h2 className="font-display text-center text-2xl font-bold text-white">Better together</h2>
       <p className="mt-1 text-center text-sm text-slate-400">
         Link up with your partner and battle for the weekly XP crown.
       </p>
@@ -245,55 +243,28 @@ function AuthStep({ data, onBack }) {
       return
     }
 
+    // Stash answers first; they're applied reliably once authenticated
+    // (see applyPendingOnboarding in App).
+    savePendingOnboarding({ ...data, email: email.trim() })
+
     const { data: res, error } = await signUp(email.trim(), password)
     if (error) {
       setBusy(false)
       return setError(error.message)
     }
 
-    const userId = res.user?.id
-    if (userId && res.session) {
-      const targets = computeTargets({
-        sex: data.sex,
-        age: Number(data.age),
-        heightCm: Number(data.height),
-        weightKg: Number(data.weight),
-        goalType: data.goalType,
-      })
-      await supabase.from('profiles').upsert({
-        id: userId,
-        display_name: data.name || email.trim(),
-        age: Number(data.age) || null,
-        sex: data.sex || null,
-        height_cm: Number(data.height) || null,
-        weight_goal_type: data.goalType || null,
-        goal_weight: Number(data.goalWeight) || null,
-        onboarded: true,
-        ...(targets && {
-          calorie_goal: targets.calories,
-          protein_goal: targets.protein,
-          carbs_goal: targets.carbs,
-          fat_goal: targets.fat,
-        }),
-      })
-      if (Number(data.weight)) {
-        await supabase.from('weight_logs').insert({
-          user_id: userId,
-          weight: Number(data.weight),
-          logged_date: todayISO(),
-        })
-      }
-      // onAuthStateChange swaps us into the app.
-    } else if (userId && !res.session) {
+    if (res.user && !res.session) {
       setNotice('Check your email to confirm your account, then log in.')
       setMode('signin')
     }
+    // Otherwise onAuthStateChange swaps us into the app and the pending
+    // onboarding data is written there.
     setBusy(false)
   }
 
   return (
     <div className="flex flex-1 flex-col justify-center">
-      <h2 className="text-2xl font-bold text-white">
+      <h2 className="font-display text-3xl font-bold text-white">
         {isSignup ? `You're all set${data.name ? `, ${data.name}` : ''}!` : 'Welcome back'}
       </h2>
       <p className="mt-1 text-sm text-slate-400">
@@ -355,8 +326,8 @@ function AuthStep({ data, onBack }) {
 function Question({ title, subtitle, children }) {
   return (
     <div className="flex flex-1 flex-col pt-10">
-      <h2 className="text-2xl font-bold text-white">{title}</h2>
-      {subtitle && <p className="mt-1 text-sm text-slate-400">{subtitle}</p>}
+      <h2 className="font-display text-3xl font-bold text-white">{title}</h2>
+      {subtitle && <p className="mt-1.5 text-sm text-muted">{subtitle}</p>}
       <div className="mt-6">{children}</div>
     </div>
   )

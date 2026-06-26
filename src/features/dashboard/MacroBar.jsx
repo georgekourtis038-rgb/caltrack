@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 
 const COLORS = {
-  protein: 'bg-sky-400',
-  carbs: 'bg-amber-400',
-  fat: 'bg-pink-400',
+  protein: 'bg-protein',
+  carbs: 'bg-carbs',
+  fat: 'bg-fat',
 }
 
 /**

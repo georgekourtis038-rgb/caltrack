@@ -13,7 +13,7 @@ export function useCelebrate() {
 }
 
 function fireConfetti() {
-  confetti({ particleCount: 80, spread: 70, origin: { y: 0.7 }, colors: ['#22c55e', '#3b82f6', '#f59e0b', '#ec4899'] })
+  confetti({ particleCount: 90, spread: 75, origin: { y: 0.7 }, colors: ['#cbfb45', '#f3c969', '#5cc8ff', '#f4719c'] })
 }
 
 export function CelebrationProvider({ children }) {

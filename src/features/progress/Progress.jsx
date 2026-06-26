@@ -145,8 +145,8 @@ export default function Progress() {
               contentStyle={{ background: '#1e293b', border: 'none', borderRadius: 12, fontSize: 12 }}
               labelStyle={{ color: '#e2e8f0' }}
             />
-            <ReferenceLine y={goal} stroke="#f59e0b" strokeDasharray="4 4" />
-            <Bar dataKey="calories" fill="#22c55e" radius={[4, 4, 0, 0]} />
+            <ReferenceLine y={goal} stroke="#f3c969" strokeDasharray="4 4" />
+            <Bar dataKey="calories" fill="#cbfb45" radius={[5, 5, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
         <p className="mt-1 text-center text-xs text-slate-500">
@@ -156,9 +156,9 @@ export default function Progress() {
 
       {/* Macro averages */}
       <section className="mt-4 grid grid-cols-3 gap-3">
-        <MacroAvg label="Protein" value={macros.protein} color="text-sky-400" />
-        <MacroAvg label="Carbs" value={macros.carbs} color="text-amber-400" />
-        <MacroAvg label="Fat" value={macros.fat} color="text-pink-400" />
+        <MacroAvg label="Protein" value={macros.protein} color="text-protein" />
+        <MacroAvg label="Carbs" value={macros.carbs} color="text-carbs" />
+        <MacroAvg label="Fat" value={macros.fat} color="text-fat" />
       </section>
       <p className="mt-1 px-1 text-xs text-slate-500">Daily average over the past 7 days</p>
 
@@ -213,7 +213,7 @@ export default function Progress() {
                 contentStyle={{ background: '#1e293b', border: 'none', borderRadius: 12, fontSize: 12 }}
                 labelStyle={{ color: '#e2e8f0' }}
               />
-              <Line type="monotone" dataKey="weight" stroke="#8b5cf6" strokeWidth={2} dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="weight" stroke="#cbfb45" strokeWidth={2.5} dot={{ r: 3, fill: '#cbfb45' }} />
             </LineChart>
           </ResponsiveContainer>
         ) : (
