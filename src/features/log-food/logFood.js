@@ -1,22 +1,10 @@
 import { supabase } from '../../lib/supabase.js'
 import { evaluateBadges } from '../badges/badges.js'
 
-const XP_PER_MEAL = 10
-
 // Local (not UTC) YYYY-MM-DD.
 export function todayLocalISO(d = new Date()) {
   const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
   return local.toISOString().slice(0, 10)
-}
-
-// The calendar day before a given YYYY-MM-DD (noon avoids DST edges).
-function previousDayISO(iso) {
-  const d = new Date(`${iso}T12:00:00`)
-  d.setDate(d.getDate() - 1)
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
 }
 
 // Default meal type based on the time of day.
@@ -28,19 +16,37 @@ export function mealTypeForNow(d = new Date()) {
   return 'dinner'
 }
 
-// 100 XP per level → level 1 at 0–99 XP, level 2 at 100–199, etc.
-export const levelForXp = (xp) => Math.floor(xp / 100) + 1
+async function totalXp(userId) {
+  const { data } = await supabase
+    .from('gamification')
+    .select('total_xp')
+    .eq('user_id', userId)
+    .single()
+  return data?.total_xp ?? 0
+}
 
 /**
- * Insert a food entry for today, then award XP and update streak/level.
- * `entry`: { food_name, meal_type, calories, protein, carbs, fat, serving_size? }
+ * Recompute all gamification XP from source data (food + weight logs vs goal).
+ * XP is per-day goal adherence, so it never depends on how many items you log.
+ * Returns the new total XP.
+ */
+export async function recomputeGamification(userId) {
+  const { data, error } = await supabase.rpc('recompute_gamification', { uid: userId })
+  if (error) throw error
+  return data ?? 0
+}
+
+/**
+ * Insert a food entry for today, then recompute score from scratch.
+ * Returns { xp, badges } where xp is the change in total XP (>= 0) so the UI
+ * can celebrate genuine progress.
  */
 export async function logFoodEntry(userId, entry) {
-  const today = todayLocalISO()
+  const before = await totalXp(userId)
 
   const { error: insertError } = await supabase.from('food_logs').insert({
     user_id: userId,
-    logged_date: today,
+    logged_date: todayLocalISO(),
     meal_type: entry.meal_type,
     food_name: entry.food_name,
     calories: entry.calories,
@@ -51,9 +57,8 @@ export async function logFoodEntry(userId, entry) {
   })
   if (insertError) throw insertError
 
-  await awardXp(userId, today)
+  const after = await recomputeGamification(userId)
 
-  // Badges are a nice-to-have side effect — never let them block a log.
   let badges = []
   try {
     badges = await evaluateBadges(userId)
@@ -61,76 +66,21 @@ export async function logFoodEntry(userId, entry) {
     console.error('Badge evaluation failed:', e)
   }
 
-  return { xp: XP_PER_MEAL, badges }
+  return { xp: Math.max(0, after - before), badges }
 }
 
 /**
- * Delete a food entry and refund the XP it granted. Without this, log → delete
- * → repeat farms unlimited XP. Refund is symmetric (+10 on log, −10 on delete),
- * floored at 0, with level recomputed. Returns the XP removed so the UI can
- * reflect it. Streaks are intentionally left unchanged (a day still counts as
- * logged for streak purposes even after removing one of its entries).
+ * Delete a food entry and recompute score. Because XP is derived from the
+ * remaining logs, removing an entry can only lower the day's XP toward its
+ * true value — there is no log/delete exploit.
  */
 export async function deleteFoodEntry(userId, logId) {
-  const { error: delError } = await supabase
+  const { error } = await supabase
     .from('food_logs')
     .delete()
     .eq('id', logId)
     .eq('user_id', userId)
-  if (delError) throw delError
-
-  const { data: g, error } = await supabase
-    .from('gamification')
-    .select('total_xp, weekly_xp')
-    .eq('user_id', userId)
-    .single()
-  if (error || !g) return { xp: 0 }
-
-  const total_xp = Math.max(0, g.total_xp - XP_PER_MEAL)
-  const weekly_xp = Math.max(0, g.weekly_xp - XP_PER_MEAL)
-
-  const { error: updateError } = await supabase
-    .from('gamification')
-    .update({
-      total_xp,
-      weekly_xp,
-      level: levelForXp(total_xp),
-      updated_at: new Date().toISOString(),
-    })
-    .eq('user_id', userId)
-  if (updateError) throw updateError
-
-  return { xp: -XP_PER_MEAL }
-}
-
-async function awardXp(userId, today) {
-  const { data: g, error } = await supabase
-    .from('gamification')
-    .select('total_xp, weekly_xp, current_streak, longest_streak, last_logged_date')
-    .eq('user_id', userId)
-    .single()
   if (error) throw error
 
-  // Streak: only changes on a new calendar day. Consecutive day → +1,
-  // otherwise (gap, or first ever log) the streak restarts at 1.
-  let streak = g.current_streak
-  if (g.last_logged_date !== today) {
-    streak = g.last_logged_date === previousDayISO(today) ? g.current_streak + 1 : 1
-  }
-
-  const total_xp = g.total_xp + XP_PER_MEAL
-
-  const { error: updateError } = await supabase
-    .from('gamification')
-    .update({
-      total_xp,
-      weekly_xp: g.weekly_xp + XP_PER_MEAL,
-      current_streak: streak,
-      longest_streak: Math.max(g.longest_streak, streak),
-      last_logged_date: today,
-      level: levelForXp(total_xp),
-      updated_at: new Date().toISOString(),
-    })
-    .eq('user_id', userId)
-  if (updateError) throw updateError
+  await recomputeGamification(userId)
 }

@@ -29,7 +29,7 @@ export default function Progress() {
   const [loading, setLoading] = useState(true)
   const [goal, setGoal] = useState(2000)
   const [chart, setChart] = useState([])
-  const [macros, setMacros] = useState({ protein: 0, carbs: 0, fat: 0 })
+  const [macros, setMacros] = useState({ protein: null, carbs: null, fat: null, days: 0 })
   const [streaks, setStreaks] = useState({ current: 0, longest: 0, totalDays: 0 })
   const [weights, setWeights] = useState([])
   const [unitSystem, setUnitSystem] = useState('metric')
@@ -69,15 +69,29 @@ export default function Progress() {
       })
     )
 
+    // Average only over days that actually have logged food — empty days must
+    // not drag the average down. No logged days → null (renders "No data").
     let p = 0
     let c = 0
     let f = 0
+    let loggedDays = 0
     for (const d of byDay.values()) {
+      if (d.calories <= 0) continue
       p += d.protein
       c += d.carbs
       f += d.fat
+      loggedDays += 1
     }
-    setMacros({ protein: Math.round(p / 7), carbs: Math.round(c / 7), fat: Math.round(f / 7) })
+    setMacros(
+      loggedDays > 0
+        ? {
+            protein: Math.round(p / loggedDays),
+            carbs: Math.round(c / loggedDays),
+            fat: Math.round(f / loggedDays),
+            days: loggedDays,
+          }
+        : { protein: null, carbs: null, fat: null, days: 0 }
+    )
 
     const distinctDays = new Set((allRes.data || []).map((r) => r.logged_date))
     setStreaks({
@@ -166,13 +180,24 @@ export default function Progress() {
         </p>
       </section>
 
-      {/* Macro averages */}
-      <section className="mt-4 grid grid-cols-3 gap-3">
-        <MacroAvg label="Protein" value={macros.protein} color="text-protein" />
-        <MacroAvg label="Carbs" value={macros.carbs} color="text-carbs" />
-        <MacroAvg label="Fat" value={macros.fat} color="text-fat" />
-      </section>
-      <p className="mt-1 px-1 text-xs text-faint">Daily average over the past 7 days</p>
+      {/* Macro averages — only over days with logged food */}
+      {macros.days > 0 ? (
+        <>
+          <section className="mt-4 grid grid-cols-3 gap-3">
+            <MacroAvg label="Protein" value={macros.protein} color="text-protein" />
+            <MacroAvg label="Carbs" value={macros.carbs} color="text-carbs" />
+            <MacroAvg label="Fat" value={macros.fat} color="text-fat" />
+          </section>
+          <p className="mt-1 px-1 text-xs text-faint">
+            Daily average across {macros.days} logged {macros.days === 1 ? 'day' : 'days'}
+          </p>
+        </>
+      ) : (
+        <section className="mt-4 rounded-2xl bg-surface-2 p-6 text-center ring-1 ring-white/5">
+          <p className="text-sm font-medium text-muted">No data yet</p>
+          <p className="mt-1 text-xs text-faint">Log a meal to see your macro averages.</p>
+        </section>
+      )}
 
       {/* Streak history */}
       <section className="mt-4 grid grid-cols-3 gap-3">

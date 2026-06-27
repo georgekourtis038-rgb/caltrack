@@ -4,7 +4,7 @@ import MealTypePicker from './MealTypePicker.jsx'
 import { supabase } from '../../lib/supabase.js'
 import { parseServingGrams } from '../../lib/units.js'
 import { useAuth } from '../auth/AuthContext.jsx'
-import { deleteFoodEntry } from './logFood.js'
+import { deleteFoodEntry, recomputeGamification } from './logFood.js'
 
 const r0 = (n) => Math.round(n || 0)
 const r1 = (n) => Math.round((n || 0) * 10) / 10
@@ -62,6 +62,12 @@ export default function EditLogSheet({ log, onClose, onChanged }) {
       setError(error.message)
       setBusy(false)
       return
+    }
+    // Calories may have changed → re-derive the day's XP.
+    try {
+      await recomputeGamification(user.id)
+    } catch (e) {
+      console.error('Recompute failed:', e)
     }
     onChanged()
   }
