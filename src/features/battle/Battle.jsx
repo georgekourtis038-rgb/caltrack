@@ -155,10 +155,10 @@ function Versus({ me, myStats, partner, partnerStats, onDisconnect }) {
   // Each player's avatar color drives their half of the battle bar (and their
   // stats). If both picked the same color, nudge the partner to a contrasting
   // tone so the two sides stay distinguishable.
-  const myColor = me?.avatar_color || '#cbfb45'
-  let partnerColor = partner?.avatar_color || '#f4719c'
-  if (partnerColor.toLowerCase() === myColor.toLowerCase()) partnerColor = '#f4719c'
-  if (partnerColor.toLowerCase() === myColor.toLowerCase()) partnerColor = '#5cc8ff'
+  const myColor = me?.avatar_color || '#e3b873'
+  let partnerColor = partner?.avatar_color || '#d98ba6'
+  if (partnerColor.toLowerCase() === myColor.toLowerCase()) partnerColor = '#d98ba6'
+  if (partnerColor.toLowerCase() === myColor.toLowerCase()) partnerColor = '#6fd0c5'
 
   const rows = [
     ['Weekly XP', myStats.weeklyXp, partnerStats.weeklyXp],
@@ -173,7 +173,7 @@ function Versus({ me, myStats, partner, partnerStats, onDisconnect }) {
       {/* Heads */}
       <div className="flex items-center justify-between">
         <Head profile={me} label="You" align="left" />
-        <span className="text-sm font-bold text-slate-500">VS</span>
+        <span className="text-sm font-bold text-faint">VS</span>
         <Head profile={partner} label={partner.display_name || 'Partner'} align="right" />
       </div>
 
@@ -183,7 +183,7 @@ function Versus({ me, myStats, partner, partnerStats, onDisconnect }) {
           <div className="transition-all duration-500" style={{ width: `${myShare}%`, backgroundColor: myColor }} />
           <div className="transition-all duration-500" style={{ width: `${100 - myShare}%`, backgroundColor: partnerColor }} />
         </div>
-        <p className="mt-2 text-center text-sm font-semibold text-white">
+        <p className="mt-2 text-center text-sm font-semibold text-ink">
           {lead === 0
             ? "You're tied!"
             : lead > 0
@@ -200,19 +200,19 @@ function Versus({ me, myStats, partner, partnerStats, onDisconnect }) {
             className={`grid grid-cols-3 items-center px-4 py-3 ${i > 0 ? 'border-t border-white/5' : ''}`}
           >
             <span className="text-left text-base font-bold" style={{ color: myColor }}>{mine}</span>
-            <span className="text-center text-xs uppercase tracking-wide text-slate-500">{label}</span>
+            <span className="text-center text-xs uppercase tracking-wide text-faint">{label}</span>
             <span className="text-right text-base font-bold" style={{ color: partnerColor }}>{theirs}</span>
           </div>
         ))}
       </div>
 
-      <p className="mt-3 text-center text-xs text-slate-500">
+      <p className="mt-3 text-center text-xs text-faint">
         {partner.display_name || 'Partner'} last active {relativeTime(partnerStats.updatedAt)}
       </p>
 
       <button
         onClick={onDisconnect}
-        className="mt-5 w-full rounded-xl bg-surface-2 px-4 py-2.5 text-xs font-semibold text-slate-400 ring-1 ring-white/10 active:bg-white/5"
+        className="mt-5 w-full rounded-xl bg-surface-2 px-4 py-2.5 text-xs font-semibold text-muted ring-1 ring-white/10 active:bg-white/5"
       >
         Disconnect partner
       </button>
@@ -224,9 +224,9 @@ function Head({ profile, label, align }) {
   return (
     <div className={align === 'right' ? 'text-right' : 'text-left'}>
       <div className={`mb-1 ${align === 'right' ? 'flex justify-end' : ''}`}>
-        <Avatar url={profile?.avatar_url} color={profile?.avatar_color || '#cbfb45'} name={label} size={52} />
+        <Avatar url={profile?.avatar_url} color={profile?.avatar_color || '#e3b873'} name={label} size={52} />
       </div>
-      <p className="max-w-[7rem] truncate text-sm font-semibold text-white">{label}</p>
+      <p className="max-w-[7rem] truncate text-sm font-semibold text-ink">{label}</p>
     </div>
   )
 }
@@ -235,8 +235,8 @@ function ConnectPartner({ email, setEmail, onSubmit, linking, error }) {
   return (
     <div className="rounded-2xl bg-surface-2 p-6 ring-1 ring-white/5">
       <div className="mb-3 text-center text-4xl">🤝</div>
-      <h2 className="text-center text-lg font-bold text-white">Connect your partner</h2>
-      <p className="mt-1 text-center text-sm text-slate-400">
+      <h2 className="text-center text-lg font-bold text-ink">Connect your partner</h2>
+      <p className="mt-1 text-center text-sm text-muted">
         Enter your partner's CalTrack email to link up and start competing.
       </p>
 
@@ -248,9 +248,9 @@ function ConnectPartner({ email, setEmail, onSubmit, linking, error }) {
           placeholder="partner@email.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full rounded-xl bg-white/5 px-4 py-3 text-base text-white placeholder:text-slate-500 outline-none ring-1 ring-white/10 focus:ring-brand"
+          className="w-full rounded-xl bg-white/5 px-4 py-3 text-base text-ink placeholder:text-faint outline-none ring-1 ring-white/10 focus:ring-brand"
         />
-        {error && <p className="text-sm text-pink-300">{error}</p>}
+        {error && <p className="text-sm text-danger">{error}</p>}
         <button
           type="submit"
           disabled={linking}
@@ -260,7 +260,7 @@ function ConnectPartner({ email, setEmail, onSubmit, linking, error }) {
         </button>
       </form>
 
-      <p className="mt-4 text-center text-xs text-slate-600">
+      <p className="mt-4 text-center text-xs text-faint">
         Linking is instant and mutual — once connected, you'll both see each other here.
       </p>
     </div>

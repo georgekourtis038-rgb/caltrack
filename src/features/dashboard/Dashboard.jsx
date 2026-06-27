@@ -27,8 +27,8 @@ export default function Dashboard() {
   if (error) {
     return (
       <div className="mx-auto max-w-md px-5 pt-10 text-center">
-        <p className="text-sm text-pink-300">Couldn’t load your dashboard.</p>
-        <p className="mt-1 text-xs text-slate-500">{error}</p>
+        <p className="text-sm text-danger">Couldn’t load your dashboard.</p>
+        <p className="mt-1 text-xs text-faint">{error}</p>
       </div>
     )
   }
@@ -52,7 +52,7 @@ export default function Dashboard() {
     <div className="mx-auto max-w-md px-5 pt-6">
       <header className="mb-4">
         <p className="text-sm text-muted">{greeting()},</p>
-        <h1 className="font-display text-[28px] font-bold capitalize text-white">{firstName}</h1>
+        <h1 className="font-display text-[28px] font-bold capitalize text-ink">{firstName}</h1>
       </header>
 
       {/* Gamification */}
@@ -81,7 +81,7 @@ export default function Dashboard() {
 
       {/* Today's meals */}
       <section className="mt-6">
-        <h2 className="mb-2 px-1 text-sm font-semibold text-slate-300">Today’s log</h2>
+        <h2 className="mb-2 px-1 text-sm font-semibold text-muted">Today’s log</h2>
         <MealLog logs={logs} onSelect={setEditing} />
       </section>
 

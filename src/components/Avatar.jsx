@@ -3,7 +3,7 @@
  * circle with the first initial. Shared by Profile and Battle so partners
  * see each other's photos.
  */
-export default function Avatar({ url, color = '#cbfb45', name = '', size = 56, className = '' }) {
+export default function Avatar({ url, color = '#e3b873', name = '', size = 56, className = '' }) {
   const initial = (name || '?').trim().charAt(0).toUpperCase() || '?'
   const dim = { width: size, height: size }
 

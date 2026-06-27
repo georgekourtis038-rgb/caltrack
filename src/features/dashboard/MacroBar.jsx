@@ -21,10 +21,10 @@ export default function MacroBar({ label, kind, consumed, goal }) {
   return (
     <div>
       <div className="mb-1 flex items-baseline justify-between">
-        <span className="text-xs font-medium text-slate-300">{label}</span>
-        <span className="text-xs text-slate-500">
+        <span className="text-xs font-medium text-muted">{label}</span>
+        <span className="text-xs text-faint">
           {Math.round(consumed)}
-          <span className="text-slate-600"> / {Math.round(goal)}g</span>
+          <span className="text-faint"> / {Math.round(goal)}g</span>
         </span>
       </div>
       <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">

@@ -1,30 +1,31 @@
 @import 'tailwindcss';
 
 @theme {
-  /* Typography — Space Grotesk for display, Inter for body */
-  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-display: 'Space Grotesk', 'Inter', ui-sans-serif, system-ui, sans-serif;
+  /* Typography — Fraunces (editorial serif display) + Hanken Grotesk (body) */
+  --font-sans: 'Hanken Grotesk', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: 'Fraunces', 'Hanken Grotesk', ui-serif, Georgia, serif;
 
-  /* Surfaces — layered obsidian */
-  --color-surface: #0a0b0e;
-  --color-surface-2: #14161d;
-  --color-surface-3: #1d212b;
+  /* Surfaces — deep warm plum-ink, layered */
+  --color-surface: #15111b;
+  --color-surface-2: #1e1826;
+  --color-surface-3: #2a2335;
 
-  /* Accents */
-  --color-brand: #cbfb45; /* luminous lime */
-  --color-brand-dark: #b4e635;
-  --color-gold: #f3c969; /* champagne — reward / premium */
+  /* Accents — champagne gold hero + warm rose secondary */
+  --color-brand: #e3b873; /* champagne gold */
+  --color-brand-dark: #c99a4e;
+  --color-gold: #f2d49b; /* brighter gold — rewards / shimmer */
+  --color-accent: #d98ba6; /* warm rose */
 
-  /* Macro / data viz */
-  --color-protein: #5cc8ff;
-  --color-carbs: #f4b740;
-  --color-fat: #f4719c;
+  /* Macro / data viz — jewel tones */
+  --color-protein: #6fd0c5; /* teal */
+  --color-carbs: #e6b45c; /* amber */
+  --color-fat: #e08aa0; /* rose */
 
-  /* Text */
-  --color-ink: #f5f6f8;
-  --color-muted: #8b92a1;
-  --color-faint: #59606e;
-  --color-danger: #fb6f92;
+  /* Text — warm ivory, not stark white */
+  --color-ink: #f3ede3;
+  --color-muted: #a89fb0;
+  --color-faint: #6e6678;
+  --color-danger: #e27d7d;
 }
 
 :root {
@@ -41,9 +42,10 @@ body {
   margin: 0;
   color: var(--color-ink);
   font-family: var(--font-sans);
-  /* Subtle lime glow from the top — premium depth without clutter */
+  /* Layered warm glows from the top — depth + richness, the "expensive" feel */
   background:
-    radial-gradient(125% 85% at 50% -12%, rgba(203, 251, 69, 0.07), transparent 55%),
+    radial-gradient(120% 80% at 15% -10%, rgba(227, 184, 115, 0.10), transparent 50%),
+    radial-gradient(120% 75% at 95% 0%, rgba(217, 139, 166, 0.08), transparent 55%),
     var(--color-surface);
   background-attachment: fixed;
   -webkit-font-smoothing: antialiased;
@@ -51,10 +53,11 @@ body {
   overscroll-behavior-y: none;
 }
 
-/* Display font + tight tracking for headings */
+/* Display face — Fraunces with a soft optical character */
 .font-display {
   font-family: var(--font-display);
-  letter-spacing: -0.02em;
+  font-optical-sizing: auto;
+  letter-spacing: -0.01em;
 }
 
 /* Tabular figures for stats so numbers don't jitter */
@@ -74,7 +77,7 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(243, 237, 227, 0.12);
   border-radius: 9999px;
 }
 

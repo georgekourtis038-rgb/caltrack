@@ -20,7 +20,7 @@ export default function BottomNav() {
               className={({ isActive }) =>
                 [
                   'relative flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-colors',
-                  isActive ? 'text-brand' : 'text-slate-400 active:text-slate-200',
+                  isActive ? 'text-brand' : 'text-muted active:text-ink',
                 ].join(' ')
               }
             >

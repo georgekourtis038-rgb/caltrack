@@ -52,8 +52,8 @@ export default function AuthScreen() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand/15 text-3xl">
             🔥
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">CalTrack</h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <h1 className="text-2xl font-bold tracking-tight text-ink">CalTrack</h1>
+          <p className="mt-1 text-sm text-muted">
             {isSignup ? 'Create your account' : 'Welcome back'}
           </p>
         </div>
@@ -70,7 +70,7 @@ export default function AuthScreen() {
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl bg-surface-2 px-4 py-3 text-base text-white placeholder:text-slate-500 outline-none ring-1 ring-white/10 focus:ring-brand"
+              className="w-full rounded-xl bg-surface-2 px-4 py-3 text-base text-ink placeholder:text-faint outline-none ring-1 ring-white/10 focus:ring-brand"
             />
           </div>
 
@@ -85,12 +85,12 @@ export default function AuthScreen() {
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl bg-surface-2 px-4 py-3 text-base text-white placeholder:text-slate-500 outline-none ring-1 ring-white/10 focus:ring-brand"
+              className="w-full rounded-xl bg-surface-2 px-4 py-3 text-base text-ink placeholder:text-faint outline-none ring-1 ring-white/10 focus:ring-brand"
             />
           </div>
 
           {error && (
-            <p className="rounded-lg bg-pink-500/10 px-3 py-2 text-sm text-pink-300">
+            <p className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">
               {error}
             </p>
           )}
@@ -109,7 +109,7 @@ export default function AuthScreen() {
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-slate-400">
+        <p className="mt-6 text-center text-sm text-muted">
           {isSignup ? 'Already have an account?' : 'New here?'}{' '}
           <button
             type="button"

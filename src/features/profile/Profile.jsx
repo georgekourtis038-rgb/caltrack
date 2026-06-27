@@ -13,7 +13,7 @@ import { uploadAvatarBlob, removeAvatar } from './avatar.js'
 // react-easy-crop is only needed when actually cropping — load on demand.
 const AvatarCropper = lazy(() => import('./AvatarCropper.jsx'))
 
-const AVATAR_COLORS = ['#cbfb45', '#5cc8ff', '#f4719c', '#f3c969', '#a78bfa', '#fb6f92']
+const AVATAR_COLORS = ['#e3b873', '#d98ba6', '#6fd0c5', '#e6b45c', '#a78bfa', '#e27d7d']
 
 const ACTIVITY = [
   ['1.2', 'Sedentary'],
@@ -239,15 +239,15 @@ export default function Profile() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               onBlur={() => name.trim() && name !== profile.display_name && save({ display_name: name.trim() })}
-              className="w-full rounded-lg bg-transparent text-lg font-semibold text-white outline-none focus:bg-white/5 focus:px-2"
+              className="w-full rounded-lg bg-transparent text-lg font-semibold text-ink outline-none focus:bg-white/5 focus:px-2"
             />
-            <p className="truncate text-sm text-slate-400">{user?.email}</p>
+            <p className="truncate text-sm text-muted">{user?.email}</p>
           </div>
         </div>
 
         <div className="mt-4 flex items-center gap-3">
           <span className="rounded-md bg-brand px-2 py-0.5 text-xs font-bold text-surface">Level {gam?.level ?? 1}</span>
-          <span className="tnum text-sm text-slate-300">{(gam?.total_xp ?? 0).toLocaleString()} XP</span>
+          <span className="tnum text-sm text-muted">{(gam?.total_xp ?? 0).toLocaleString()} XP</span>
         </div>
 
         {/* Photo controls */}
@@ -255,14 +255,14 @@ export default function Profile() {
           <button
             onClick={() => cameraRef.current?.click()}
             disabled={photoBusy}
-            className="rounded-xl bg-white/5 py-2.5 text-sm font-semibold text-white ring-1 ring-white/10 active:bg-white/10 disabled:opacity-50"
+            className="rounded-xl bg-white/5 py-2.5 text-sm font-semibold text-ink ring-1 ring-white/10 active:bg-white/10 disabled:opacity-50"
           >
             📷 Take photo
           </button>
           <button
             onClick={() => uploadRef.current?.click()}
             disabled={photoBusy}
-            className="rounded-xl bg-white/5 py-2.5 text-sm font-semibold text-white ring-1 ring-white/10 active:bg-white/10 disabled:opacity-50"
+            className="rounded-xl bg-white/5 py-2.5 text-sm font-semibold text-ink ring-1 ring-white/10 active:bg-white/10 disabled:opacity-50"
           >
             🖼️ Upload photo
           </button>
@@ -278,7 +278,7 @@ export default function Profile() {
 
         {/* Avatar color (used when no photo is set) */}
         <div className="mt-4">
-          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-faint">
             Avatar color {avatarUrl && <span className="text-faint">(shown when no photo)</span>}
           </p>
           <div className="flex items-center gap-2">
@@ -311,27 +311,27 @@ export default function Profile() {
       {/* Body stats */}
       <section className="mt-4 rounded-2xl bg-surface-2 p-5 ring-1 ring-white/5">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-200">Your stats</h2>
+          <h2 className="text-sm font-semibold text-ink">Your stats</h2>
           <UnitToggle system={unitSystem} onChange={changeUnitSystem} />
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <StatField label="Age" value={stats.age} onChange={(v) => setStats((s) => ({ ...s, age: v }))} onBlur={() => saveStat('age')} />
           <div>
-            <span className="mb-1 block text-xs text-slate-400">Current weight</span>
-            <div className="rounded-xl bg-white/5 px-3 py-2.5 text-base text-slate-300 ring-1 ring-white/10">
+            <span className="mb-1 block text-xs text-muted">Current weight</span>
+            <div className="rounded-xl bg-white/5 px-3 py-2.5 text-base text-muted ring-1 ring-white/10">
               {currentWeight != null ? formatWeight(currentWeight, unitSystem) : '—'}
             </div>
           </div>
         </div>
 
-        <p className="mb-1.5 mt-3 text-xs text-slate-400">Height</p>
+        <p className="mb-1.5 mt-3 text-xs text-muted">Height</p>
         <HeightInput valueCm={stats.height_cm} system={unitSystem} onChangeCm={(v) => commitStat('height_cm', v)} />
 
-        <p className="mb-1.5 mt-3 text-xs text-slate-400">Goal weight</p>
+        <p className="mb-1.5 mt-3 text-xs text-muted">Goal weight</p>
         <WeightInput valueKg={stats.goal_weight} system={unitSystem} onChangeKg={(v) => commitStat('goal_weight', v)} placeholder="Target weight" />
 
-        <p className="mb-1.5 mt-3 text-xs text-slate-400">Sex</p>
+        <p className="mb-1.5 mt-3 text-xs text-muted">Sex</p>
         <div className="grid grid-cols-2 gap-2">
           {['male', 'female'].map((s) => (
             <Toggle key={s} active={stats.sex === s} onClick={() => { setStats((p) => ({ ...p, sex: s })); save({ sex: s }) }}>
@@ -340,7 +340,7 @@ export default function Profile() {
           ))}
         </div>
 
-        <p className="mb-1.5 mt-3 text-xs text-slate-400">Goal</p>
+        <p className="mb-1.5 mt-3 text-xs text-muted">Goal</p>
         <div className="grid grid-cols-3 gap-2">
           {['lose', 'maintain', 'gain'].map((g) => (
             <Toggle key={g} active={stats.weight_goal_type === g} onClick={() => { setStats((p) => ({ ...p, weight_goal_type: g })); save({ weight_goal_type: g }) }}>
@@ -349,7 +349,7 @@ export default function Profile() {
           ))}
         </div>
 
-        <p className="mb-1.5 mt-3 text-xs text-slate-400">Activity level</p>
+        <p className="mb-1.5 mt-3 text-xs text-muted">Activity level</p>
         <div className="grid grid-cols-4 gap-2">
           {ACTIVITY.map(([val, label]) => (
             <Toggle key={val} active={stats.activity_level === val} onClick={() => { setStats((p) => ({ ...p, activity_level: val })); save({ activity_level: Number(val) }) }}>
@@ -362,7 +362,7 @@ export default function Profile() {
       {/* Smart recommendation */}
       <section className="mt-4 rounded-2xl bg-gradient-to-br from-brand/15 to-surface-2 p-5 ring-1 ring-brand/25">
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-base font-bold text-white">Smart targets</h2>
+          <h2 className="font-display text-base font-bold text-ink">Smart targets</h2>
           <span className="rounded-md bg-brand/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-brand">
             Auto
           </span>
@@ -378,7 +378,7 @@ export default function Profile() {
                 ['Fat', `${recommended.fat}g`],
               ].map(([l, v]) => (
                 <div key={l} className="rounded-xl bg-black/25 py-2">
-                  <p className="tnum font-display text-base font-bold text-white">{v}</p>
+                  <p className="tnum font-display text-base font-bold text-ink">{v}</p>
                   <p className="text-[10px] uppercase tracking-wide text-faint">{l}</p>
                 </div>
               ))}
@@ -392,8 +392,8 @@ export default function Profile() {
           </>
         ) : (
           <p className="mt-2 text-sm text-muted">
-            Add your <span className="text-slate-200">sex, age, height</span>
-            {currentWeight == null && <> and log a <span className="text-slate-200">weight</span></>} above, and
+            Add your <span className="text-ink">sex, age, height</span>
+            {currentWeight == null && <> and log a <span className="text-ink">weight</span></>} above, and
             we'll auto-calculate your ideal calories and macros.
           </p>
         )}
@@ -402,14 +402,14 @@ export default function Profile() {
       {/* Goals */}
       <section className="mt-4 rounded-2xl bg-surface-2 p-5 ring-1 ring-white/5">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-200">Daily goals</h2>
+          <h2 className="text-sm font-semibold text-ink">Daily goals</h2>
           {savedAt && <span className="text-xs text-brand">Saved ✓</span>}
         </div>
         <div className="grid grid-cols-2 gap-3">
           {GOAL_FIELDS.map((f) => (
             <label key={f.key} className="block">
-              <span className="mb-1 block text-xs text-slate-400">
-                {f.label} <span className="text-slate-600">({f.suffix})</span>
+              <span className="mb-1 block text-xs text-muted">
+                {f.label} <span className="text-faint">({f.suffix})</span>
               </span>
               <input
                 type="number"
@@ -417,7 +417,7 @@ export default function Profile() {
                 value={goals[f.key]}
                 onChange={(e) => setGoals((g) => ({ ...g, [f.key]: e.target.value }))}
                 onBlur={() => saveGoals()}
-                className="w-full rounded-xl bg-white/5 px-3 py-2.5 text-base text-white outline-none ring-1 ring-white/10 focus:ring-brand"
+                className="w-full rounded-xl bg-white/5 px-3 py-2.5 text-base text-ink outline-none ring-1 ring-white/10 focus:ring-brand"
               />
             </label>
           ))}
@@ -426,7 +426,7 @@ export default function Profile() {
 
       {/* Trophy shelf */}
       <section className="mt-4">
-        <h2 className="mb-2 px-1 text-sm font-semibold text-slate-200">Badges</h2>
+        <h2 className="mb-2 px-1 text-sm font-semibold text-ink">Badges</h2>
         <div className="grid grid-cols-2 gap-3">
           {BADGES.map((b, i) => {
             const date = unlocked[b.key]
@@ -440,11 +440,11 @@ export default function Profile() {
                 className={`rounded-2xl p-4 ring-1 ${isUnlocked ? 'bg-surface-2 ring-brand/30' : 'bg-surface-2/40 ring-white/5'}`}
               >
                 <div className={`text-3xl ${isUnlocked ? '' : 'opacity-30 grayscale'}`}>{b.icon}</div>
-                <p className={`mt-1.5 text-sm font-semibold ${isUnlocked ? 'text-white' : 'text-slate-500'}`}>{b.name}</p>
+                <p className={`mt-1.5 text-sm font-semibold ${isUnlocked ? 'text-ink' : 'text-faint'}`}>{b.name}</p>
                 {isUnlocked ? (
                   <p className="text-[11px] text-brand">{new Date(date).toLocaleDateString()}</p>
                 ) : (
-                  <p className="text-[11px] text-slate-600">{b.condition}</p>
+                  <p className="text-[11px] text-faint">{b.condition}</p>
                 )}
               </motion.div>
             )
@@ -455,7 +455,7 @@ export default function Profile() {
       <button
         onClick={handleSignOut}
         disabled={signingOut}
-        className="mt-6 w-full rounded-xl bg-surface-2 px-4 py-3 text-sm font-semibold text-pink-400 ring-1 ring-white/10 active:bg-white/5 disabled:opacity-60"
+        className="mt-6 w-full rounded-xl bg-surface-2 px-4 py-3 text-sm font-semibold text-danger ring-1 ring-white/10 active:bg-white/5 disabled:opacity-60"
       >
         {signingOut ? 'Signing out…' : 'Sign out'}
       </button>
@@ -477,14 +477,14 @@ export default function Profile() {
 function StatField({ label, value, onChange, onBlur }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs text-slate-400">{label}</span>
+      <span className="mb-1 block text-xs text-muted">{label}</span>
       <input
         type="number"
         inputMode="decimal"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onBlur={onBlur}
-        className="w-full rounded-xl bg-white/5 px-3 py-2.5 text-base text-white outline-none ring-1 ring-white/10 focus:ring-brand"
+        className="w-full rounded-xl bg-white/5 px-3 py-2.5 text-base text-ink outline-none ring-1 ring-white/10 focus:ring-brand"
       />
     </label>
   )
@@ -494,7 +494,7 @@ function Toggle({ active, onClick, children }) {
   return (
     <button
       onClick={onClick}
-      className={`rounded-xl py-2 text-xs font-semibold transition-colors ${active ? 'bg-brand text-surface' : 'bg-white/5 text-slate-300 active:bg-white/10'}`}
+      className={`rounded-xl py-2 text-xs font-semibold transition-colors ${active ? 'bg-brand text-surface' : 'bg-white/5 text-muted active:bg-white/10'}`}
     >
       {children}
     </button>

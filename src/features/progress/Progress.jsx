@@ -139,7 +139,7 @@ export default function Progress() {
       <PageHeader title="Progress" subtitle="Last 7 days" />
 
       {isStagnating(weights) && (
-        <div className="mb-4 rounded-2xl bg-amber-400/10 px-4 py-3 text-sm text-amber-200 ring-1 ring-amber-400/20">
+        <div className="mb-4 rounded-2xl bg-gold/10 px-4 py-3 text-sm text-gold ring-1 ring-gold/20">
           👋 Your weight has held steady for 2+ weeks. A small tweak to your goals or intake could
           get things moving again.
         </div>
@@ -147,21 +147,21 @@ export default function Progress() {
 
       {/* Calorie chart */}
       <section className="rounded-2xl bg-surface-2 p-4 ring-1 ring-white/5">
-        <h2 className="mb-3 text-sm font-semibold text-slate-200">Calories vs goal</h2>
+        <h2 className="mb-3 text-sm font-semibold text-ink">Calories vs goal</h2>
         <ResponsiveContainer width="100%" height={180}>
           <BarChart data={chart} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
-            <XAxis dataKey="label" tick={{ fill: '#94a3b8', fontSize: 11 }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fill: '#94a3b8', fontSize: 11 }} axisLine={false} tickLine={false} width={40} />
+            <XAxis dataKey="label" tick={{ fill: '#a89fb0', fontSize: 11 }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fill: '#a89fb0', fontSize: 11 }} axisLine={false} tickLine={false} width={40} />
             <Tooltip
               cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-              contentStyle={{ background: '#1e293b', border: 'none', borderRadius: 12, fontSize: 12 }}
-              labelStyle={{ color: '#e2e8f0' }}
+              contentStyle={{ background: '#2a2335', border: 'none', borderRadius: 12, fontSize: 12 }}
+              labelStyle={{ color: '#f3ede3' }}
             />
-            <ReferenceLine y={goal} stroke="#f3c969" strokeDasharray="4 4" />
-            <Bar dataKey="calories" fill="#cbfb45" radius={[5, 5, 0, 0]} />
+            <ReferenceLine y={goal} stroke="#d98ba6" strokeDasharray="4 4" />
+            <Bar dataKey="calories" fill="#e3b873" radius={[5, 5, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
-        <p className="mt-1 text-center text-xs text-slate-500">
+        <p className="mt-1 text-center text-xs text-faint">
           Dashed line = goal ({goal.toLocaleString()} kcal)
         </p>
       </section>
@@ -172,7 +172,7 @@ export default function Progress() {
         <MacroAvg label="Carbs" value={macros.carbs} color="text-carbs" />
         <MacroAvg label="Fat" value={macros.fat} color="text-fat" />
       </section>
-      <p className="mt-1 px-1 text-xs text-slate-500">Daily average over the past 7 days</p>
+      <p className="mt-1 px-1 text-xs text-faint">Daily average over the past 7 days</p>
 
       {/* Streak history */}
       <section className="mt-4 grid grid-cols-3 gap-3">
@@ -184,7 +184,7 @@ export default function Progress() {
       {/* Weight trend */}
       <section className="mt-4 rounded-2xl bg-surface-2 p-4 ring-1 ring-white/5">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-slate-200">Weight trend</h2>
+          <h2 className="text-sm font-semibold text-ink">Weight trend</h2>
           <button
             onClick={() => setWeighOpen((o) => !o)}
             className="rounded-lg bg-brand/15 px-3 py-1.5 text-xs font-semibold text-brand active:bg-brand/25"
@@ -203,7 +203,7 @@ export default function Progress() {
               placeholder={`Weight (${unitLabel})`}
               value={weightInput}
               onChange={(e) => setWeightInput(e.target.value)}
-              className="flex-1 rounded-xl bg-white/5 px-3 py-2.5 text-base text-white placeholder:text-slate-500 outline-none ring-1 ring-white/10 focus:ring-brand"
+              className="flex-1 rounded-xl bg-white/5 px-3 py-2.5 text-base text-ink placeholder:text-faint outline-none ring-1 ring-white/10 focus:ring-brand"
             />
             <button
               type="submit"
@@ -219,18 +219,18 @@ export default function Progress() {
           <ResponsiveContainer width="100%" height={160}>
             <LineChart data={weightChart} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
               <CartesianGrid stroke="rgba(255,255,255,0.05)" vertical={false} />
-              <XAxis dataKey="label" tick={{ fill: '#94a3b8', fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis domain={['dataMin - 1', 'dataMax + 1']} tick={{ fill: '#94a3b8', fontSize: 11 }} axisLine={false} tickLine={false} width={40} />
+              <XAxis dataKey="label" tick={{ fill: '#a89fb0', fontSize: 11 }} axisLine={false} tickLine={false} />
+              <YAxis domain={['dataMin - 1', 'dataMax + 1']} tick={{ fill: '#a89fb0', fontSize: 11 }} axisLine={false} tickLine={false} width={40} />
               <Tooltip
                 formatter={(v) => [`${v} ${unitLabel}`, 'Weight']}
-                contentStyle={{ background: '#1e293b', border: 'none', borderRadius: 12, fontSize: 12 }}
-                labelStyle={{ color: '#e2e8f0' }}
+                contentStyle={{ background: '#2a2335', border: 'none', borderRadius: 12, fontSize: 12 }}
+                labelStyle={{ color: '#f3ede3' }}
               />
-              <Line type="monotone" dataKey="weight" stroke="#cbfb45" strokeWidth={2.5} dot={{ r: 3, fill: '#cbfb45' }} />
+              <Line type="monotone" dataKey="weight" stroke="#e3b873" strokeWidth={2.5} dot={{ r: 3, fill: '#e3b873' }} />
             </LineChart>
           </ResponsiveContainer>
         ) : (
-          <p className="py-6 text-center text-sm text-slate-500">
+          <p className="py-6 text-center text-sm text-faint">
             {weights.length === 1
               ? 'Log one more to see your trend.'
               : 'Log your weight to start tracking a trend.'}
@@ -245,7 +245,7 @@ function MacroAvg({ label, value, color }) {
   return (
     <div className="rounded-2xl bg-surface-2 p-4 text-center ring-1 ring-white/5">
       <p className={`text-2xl font-bold ${color}`}>{value}g</p>
-      <p className="text-xs text-slate-400">{label}</p>
+      <p className="text-xs text-muted">{label}</p>
     </div>
   )
 }
@@ -253,8 +253,8 @@ function MacroAvg({ label, value, color }) {
 function Stat({ label, value }) {
   return (
     <div className="rounded-2xl bg-surface-2 p-4 text-center ring-1 ring-white/5">
-      <p className="text-2xl font-bold text-white">{value}</p>
-      <p className="text-[11px] text-slate-400">{label}</p>
+      <p className="text-2xl font-bold text-ink">{value}</p>
+      <p className="text-[11px] text-muted">{label}</p>
     </div>
   )
 }

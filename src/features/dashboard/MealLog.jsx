@@ -18,8 +18,8 @@ export default function MealLog({ logs, onSelect }) {
         to="/log"
         className="block rounded-2xl border border-dashed border-white/15 bg-surface-2/50 p-8 text-center"
       >
-        <p className="text-sm font-medium text-slate-300">No meals logged yet</p>
-        <p className="mt-1 text-xs text-slate-500">Tap to add your first meal of the day</p>
+        <p className="text-sm font-medium text-muted">No meals logged yet</p>
+        <p className="mt-1 text-xs text-faint">Tap to add your first meal of the day</p>
       </Link>
     )
   }
@@ -36,11 +36,11 @@ export default function MealLog({ logs, onSelect }) {
         return (
           <div key={group.key}>
             <div className="mb-1.5 flex items-center justify-between px-1">
-              <h3 className="text-sm font-semibold text-slate-200">
+              <h3 className="text-sm font-semibold text-ink">
                 <span className="mr-1.5">{group.icon}</span>
                 {group.label}
               </h3>
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-faint">
                 {Math.round(subtotal).toLocaleString()} cal
               </span>
             </div>
@@ -52,12 +52,12 @@ export default function MealLog({ logs, onSelect }) {
                     className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors active:bg-white/5"
                   >
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-white">{item.food_name}</p>
+                      <p className="truncate text-sm font-medium text-ink">{item.food_name}</p>
                       {item.serving_size && (
-                        <p className="truncate text-xs text-slate-500">{item.serving_size}</p>
+                        <p className="truncate text-xs text-faint">{item.serving_size}</p>
                       )}
                     </div>
-                    <span className="shrink-0 text-sm font-semibold text-slate-300">
+                    <span className="shrink-0 text-sm font-semibold text-muted">
                       {Math.round(item.calories ?? 0)}
                     </span>
                   </button>

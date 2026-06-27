@@ -55,8 +55,8 @@ export default function ManualEntrySheet({ open, onClose, onLogged }) {
   return (
     <BottomSheet open={open} onClose={saving ? undefined : onClose}>
       <div className="pb-2">
-        <h2 className="text-lg font-bold text-white">Add manually</h2>
-        <p className="text-sm text-slate-400">Enter the nutrition yourself</p>
+        <h2 className="text-lg font-bold text-ink">Add manually</h2>
+        <p className="text-sm text-muted">Enter the nutrition yourself</p>
 
         <div className="mt-4 space-y-3">
           <Field
@@ -80,10 +80,10 @@ export default function ManualEntrySheet({ open, onClose, onLogged }) {
           </div>
         </div>
 
-        <p className="mt-5 mb-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">Meal</p>
+        <p className="mt-5 mb-1.5 text-xs font-medium uppercase tracking-wide text-faint">Meal</p>
         <MealTypePicker value={meal} onChange={setMeal} />
 
-        {error && <p className="mt-3 text-sm text-pink-300">{error}</p>}
+        {error && <p className="mt-3 text-sm text-danger">{error}</p>}
 
         <button
           onClick={confirm}
@@ -100,10 +100,10 @@ export default function ManualEntrySheet({ open, onClose, onLogged }) {
 function Field({ label, ...props }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-xs font-medium text-slate-400">{label}</span>
+      <span className="mb-1 block text-xs font-medium text-muted">{label}</span>
       <input
         {...props}
-        className="w-full rounded-xl bg-white/5 px-4 py-2.5 text-base text-white placeholder:text-slate-600 outline-none ring-1 ring-white/10 focus:ring-brand"
+        className="w-full rounded-xl bg-white/5 px-4 py-2.5 text-base text-ink placeholder:text-faint outline-none ring-1 ring-white/10 focus:ring-brand"
       />
     </label>
   )

@@ -87,10 +87,10 @@ export default function FoodDetailSheet({ food, onClose, onLogged }) {
       <div className="pb-2">
         <div className="flex items-center gap-2">
           {isPortion && <span className="rounded-md bg-brand/15 px-2 py-0.5 text-[11px] font-bold text-brand">AI</span>}
-          <h2 className="text-lg font-bold leading-tight text-white">{f.food_name}</h2>
+          <h2 className="text-lg font-bold leading-tight text-ink">{f.food_name}</h2>
         </div>
-        {f.brand && <p className="text-sm text-slate-400">{f.brand}</p>}
-        {f.serving_size && <p className="mt-0.5 text-xs text-slate-500">Serving: {f.serving_size}</p>}
+        {f.brand && <p className="text-sm text-muted">{f.brand}</p>}
+        {f.serving_size && <p className="mt-0.5 text-xs text-faint">Serving: {f.serving_size}</p>}
 
         <div className="mt-4 grid grid-cols-4 gap-2 text-center">
           <Nutrient label="Cal" value={totals.calories} accent />
@@ -103,7 +103,7 @@ export default function FoodDetailSheet({ food, onClose, onLogged }) {
           <>
             <Label>Servings</Label>
             <div className="flex items-center justify-between rounded-xl bg-white/5 px-4 py-2.5">
-              <span className="text-sm text-slate-300">Quantity ×</span>
+              <span className="text-sm text-muted">Quantity ×</span>
               <input
                 type="number"
                 step="0.5"
@@ -111,7 +111,7 @@ export default function FoodDetailSheet({ food, onClose, onLogged }) {
                 inputMode="decimal"
                 value={qty}
                 onChange={(e) => setQty(e.target.value)}
-                className="w-20 rounded-lg bg-white/5 px-2 py-1.5 text-right text-base text-white outline-none ring-1 ring-white/10 focus:ring-brand"
+                className="w-20 rounded-lg bg-white/5 px-2 py-1.5 text-right text-base text-ink outline-none ring-1 ring-white/10 focus:ring-brand"
               />
             </div>
           </>
@@ -124,7 +124,7 @@ export default function FoodDetailSheet({ food, onClose, onLogged }) {
                 inputMode="decimal"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="flex-1 rounded-xl bg-white/5 px-4 py-2.5 text-base text-white outline-none ring-1 ring-white/10 focus:ring-brand"
+                className="flex-1 rounded-xl bg-white/5 px-4 py-2.5 text-base text-ink outline-none ring-1 ring-white/10 focus:ring-brand"
               />
               <div className="flex overflow-hidden rounded-xl ring-1 ring-white/10">
                 {UNITS.map((u) => (
@@ -133,7 +133,7 @@ export default function FoodDetailSheet({ food, onClose, onLogged }) {
                     type="button"
                     onClick={() => setUnit(u.key)}
                     className={`px-2.5 text-xs font-semibold transition-colors ${
-                      unit === u.key ? 'bg-brand text-surface' : 'bg-white/5 text-slate-300'
+                      unit === u.key ? 'bg-brand text-surface' : 'bg-white/5 text-muted'
                     }`}
                   >
                     {u.label}
@@ -159,7 +159,7 @@ export default function FoodDetailSheet({ food, onClose, onLogged }) {
         <Label>Meal</Label>
         <MealTypePicker value={meal} onChange={setMeal} />
 
-        {error && <p className="mt-3 text-sm text-pink-300">{error}</p>}
+        {error && <p className="mt-3 text-sm text-danger">{error}</p>}
 
         <button
           onClick={confirm}
@@ -175,7 +175,7 @@ export default function FoodDetailSheet({ food, onClose, onLogged }) {
 
 function Label({ children }) {
   return (
-    <p className="mt-5 mb-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">{children}</p>
+    <p className="mt-5 mb-1.5 text-xs font-medium uppercase tracking-wide text-faint">{children}</p>
   )
 }
 
@@ -184,7 +184,7 @@ function Chip({ onClick, children }) {
     <button
       type="button"
       onClick={onClick}
-      className="rounded-lg bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-300 active:bg-white/10"
+      className="rounded-lg bg-white/5 px-3 py-1.5 text-xs font-semibold text-muted active:bg-white/10"
     >
       {children}
     </button>
@@ -194,8 +194,8 @@ function Chip({ onClick, children }) {
 function Nutrient({ label, value, accent }) {
   return (
     <div className="rounded-xl bg-white/5 py-2.5">
-      <p className={`text-lg font-bold ${accent ? 'text-brand' : 'text-white'}`}>{value}</p>
-      <p className="text-[10px] uppercase tracking-wide text-slate-500">{label}</p>
+      <p className={`text-lg font-bold ${accent ? 'text-brand' : 'text-ink'}`}>{value}</p>
+      <p className="text-[10px] uppercase tracking-wide text-faint">{label}</p>
     </div>
   )
 }

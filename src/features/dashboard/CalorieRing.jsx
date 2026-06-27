@@ -27,12 +27,13 @@ export default function CalorieRing({ consumed, goal }) {
       <svg viewBox={`0 0 ${size} ${size}`} className="h-full w-full -rotate-90">
         <defs>
           <linearGradient id="ringFill" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#cbfb45" />
-            <stop offset="100%" stopColor="#9ae600" />
+            <stop offset="0%" stopColor="#f2d49b" />
+            <stop offset="55%" stopColor="#e3b873" />
+            <stop offset="100%" stopColor="#c99a4e" />
           </linearGradient>
           <linearGradient id="ringOver" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#fb6f92" />
-            <stop offset="100%" stopColor="#f4719c" />
+            <stop offset="0%" stopColor="#e27d7d" />
+            <stop offset="100%" stopColor="#d98ba6" />
           </linearGradient>
         </defs>
 
@@ -43,7 +44,7 @@ export default function CalorieRing({ consumed, goal }) {
           fill="none"
           stroke="currentColor"
           strokeWidth={stroke}
-          className="text-white/[0.07]"
+          className="text-ink/[0.07]"
         />
         <circle
           cx={size / 2}
@@ -57,7 +58,7 @@ export default function CalorieRing({ consumed, goal }) {
           strokeDashoffset={offset}
           style={{
             transition: 'stroke-dashoffset 900ms cubic-bezier(0.22, 1, 0.36, 1)',
-            filter: `drop-shadow(0 0 10px ${over ? 'rgba(251,111,146,0.35)' : 'rgba(203,251,69,0.35)'})`,
+            filter: `drop-shadow(0 0 12px ${over ? 'rgba(226,125,125,0.40)' : 'rgba(227,184,115,0.45)'})`,
           }}
         />
       </svg>
@@ -72,7 +73,7 @@ export default function CalorieRing({ consumed, goal }) {
           </>
         ) : (
           <>
-            <span className="font-display tnum text-5xl font-bold text-white">
+            <span className="font-display tnum text-5xl font-bold text-ink">
               {Math.round(remaining).toLocaleString()}
             </span>
             <span className="mt-1 text-xs font-medium uppercase tracking-widest text-muted">cal left</span>

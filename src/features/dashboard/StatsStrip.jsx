@@ -43,7 +43,7 @@ function Stat({ icon, value, label, accent }) {
   return (
     <div className="flex flex-col items-center gap-1 rounded-2xl bg-surface-2 px-2 py-3 text-center ring-1 ring-white/5">
       {icon}
-      <span className={`tnum font-display text-base font-bold ${accent ? 'text-brand' : 'text-white'}`}>{value}</span>
+      <span className={`tnum font-display text-base font-bold ${accent ? 'text-brand' : 'text-ink'}`}>{value}</span>
       <span className="text-[10px] uppercase tracking-wide text-faint">{label}</span>
     </div>
   )

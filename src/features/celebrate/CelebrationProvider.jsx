@@ -13,7 +13,7 @@ export function useCelebrate() {
 }
 
 function fireConfetti() {
-  confetti({ particleCount: 90, spread: 75, origin: { y: 0.7 }, colors: ['#cbfb45', '#f3c969', '#5cc8ff', '#f4719c'] })
+  confetti({ particleCount: 90, spread: 75, origin: { y: 0.7 }, colors: ['#e3b873', '#f2d49b', '#d98ba6', '#6fd0c5'] })
 }
 
 export function CelebrationProvider({ children }) {
@@ -90,8 +90,8 @@ export function CelebrationProvider({ children }) {
               >
                 {badge.icon}
               </motion.div>
-              <h3 className="text-xl font-bold text-white">{badge.name}</h3>
-              <p className="mt-1 text-sm text-slate-400">{badge.condition}</p>
+              <h3 className="text-xl font-bold text-ink">{badge.name}</h3>
+              <p className="mt-1 text-sm text-muted">{badge.condition}</p>
               <button
                 onClick={dismissBadge}
                 className="mt-5 w-full rounded-xl bg-brand px-4 py-3 text-base font-semibold text-surface active:bg-brand-dark"

@@ -58,7 +58,7 @@ export function WeightInput({ valueKg, system, onChangeKg, placeholder = 'Weight
         value={raw}
         onChange={handle}
         placeholder={placeholder}
-        className="w-full bg-transparent py-3 text-base text-white placeholder:text-faint outline-none"
+        className="w-full bg-transparent py-3 text-base text-ink placeholder:text-faint outline-none"
       />
       <span className="pl-2 text-sm text-muted">{weightUnitLabel(system)}</span>
     </div>
@@ -97,7 +97,7 @@ export function HeightInput({ valueCm, system, onChangeCm }) {
             value={ft}
             onChange={(e) => { setFt(e.target.value); emit(e.target.value, inch) }}
             placeholder="Height"
-            className="w-full bg-transparent py-3 text-base text-white placeholder:text-faint outline-none"
+            className="w-full bg-transparent py-3 text-base text-ink placeholder:text-faint outline-none"
           />
           <span className="pl-2 text-sm text-muted">ft</span>
         </div>
@@ -108,7 +108,7 @@ export function HeightInput({ valueCm, system, onChangeCm }) {
             value={inch}
             onChange={(e) => { setInch(e.target.value); emit(ft, e.target.value) }}
             placeholder="in"
-            className="w-full bg-transparent py-3 text-base text-white placeholder:text-faint outline-none"
+            className="w-full bg-transparent py-3 text-base text-ink placeholder:text-faint outline-none"
           />
           <span className="pl-2 text-sm text-muted">in</span>
         </div>
@@ -124,7 +124,7 @@ export function HeightInput({ valueCm, system, onChangeCm }) {
         value={cm}
         onChange={(e) => { setCm(e.target.value); onChangeCm(e.target.value === '' ? null : Number(e.target.value)) }}
         placeholder="Height"
-        className="w-full bg-transparent py-3 text-base text-white placeholder:text-faint outline-none"
+        className="w-full bg-transparent py-3 text-base text-ink placeholder:text-faint outline-none"
       />
       <span className="pl-2 text-sm text-muted">cm</span>
     </div>

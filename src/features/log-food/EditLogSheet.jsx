@@ -82,7 +82,7 @@ export default function EditLogSheet({ log, onClose, onChanged }) {
   return (
     <BottomSheet open={open} onClose={busy ? undefined : onClose}>
       <div className="pb-2">
-        <h2 className="text-lg font-bold text-white">{l.food_name}</h2>
+        <h2 className="text-lg font-bold text-ink">{l.food_name}</h2>
 
         <div className="mt-4 grid grid-cols-4 gap-2 text-center">
           <Nutrient label="Cal" value={totals.calories} accent />
@@ -99,11 +99,11 @@ export default function EditLogSheet({ log, onClose, onChanged }) {
               inputMode="decimal"
               value={grams}
               onChange={(e) => setGrams(e.target.value)}
-              className="w-full rounded-xl bg-white/5 px-4 py-2.5 text-base text-white outline-none ring-1 ring-white/10 focus:ring-brand"
+              className="w-full rounded-xl bg-white/5 px-4 py-2.5 text-base text-ink outline-none ring-1 ring-white/10 focus:ring-brand"
             />
           </>
         ) : (
-          <p className="mt-4 rounded-lg bg-white/5 px-3 py-2 text-xs text-slate-400">
+          <p className="mt-4 rounded-lg bg-white/5 px-3 py-2 text-xs text-muted">
             This entry has a custom serving, so its grams can't be rescaled. You can still change
             the meal or delete it.
           </p>
@@ -112,13 +112,13 @@ export default function EditLogSheet({ log, onClose, onChanged }) {
         <Label>Meal</Label>
         <MealTypePicker value={meal} onChange={setMeal} />
 
-        {error && <p className="mt-3 text-sm text-pink-300">{error}</p>}
+        {error && <p className="mt-3 text-sm text-danger">{error}</p>}
 
         <div className="mt-5 flex gap-3">
           <button
             onClick={remove}
             disabled={busy}
-            className="rounded-xl bg-pink-500/15 px-5 py-3.5 text-sm font-semibold text-pink-300 active:bg-pink-500/25 disabled:opacity-60"
+            className="rounded-xl bg-danger/15 px-5 py-3.5 text-sm font-semibold text-danger active:bg-danger/25 disabled:opacity-60"
           >
             Delete
           </button>
@@ -136,14 +136,14 @@ export default function EditLogSheet({ log, onClose, onChanged }) {
 }
 
 function Label({ children }) {
-  return <p className="mt-5 mb-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">{children}</p>
+  return <p className="mt-5 mb-1.5 text-xs font-medium uppercase tracking-wide text-faint">{children}</p>
 }
 
 function Nutrient({ label, value, accent }) {
   return (
     <div className="rounded-xl bg-white/5 py-2.5">
-      <p className={`text-lg font-bold ${accent ? 'text-brand' : 'text-white'}`}>{value}</p>
-      <p className="text-[10px] uppercase tracking-wide text-slate-500">{label}</p>
+      <p className={`text-lg font-bold ${accent ? 'text-brand' : 'text-ink'}`}>{value}</p>
+      <p className="text-[10px] uppercase tracking-wide text-faint">{label}</p>
     </div>
   )
 }

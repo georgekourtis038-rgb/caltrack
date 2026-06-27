@@ -8,8 +8,8 @@ import { dirname, join } from 'node:path'
 const outDir = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'icons')
 mkdirSync(outDir, { recursive: true })
 
-const BG = [15, 23, 42] // #0f172a
-const FG = [34, 197, 94] // #22c55e
+const BG = [21, 17, 27] // #15111b
+const FG = [227, 184, 115] // #e3b873
 
 function crc32(buf) {
   let c = ~0

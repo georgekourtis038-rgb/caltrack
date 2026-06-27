@@ -16,7 +16,7 @@ export default function MealTypePicker({ value, onChange }) {
           className={`rounded-xl py-2 text-xs font-semibold transition-colors ${
             value === key
               ? 'bg-brand text-surface'
-              : 'bg-white/5 text-slate-300 active:bg-white/10'
+              : 'bg-white/5 text-muted active:bg-white/10'
           }`}
         >
           {label}

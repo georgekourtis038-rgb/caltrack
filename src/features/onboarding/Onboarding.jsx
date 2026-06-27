@@ -56,7 +56,7 @@ export default function Onboarding() {
           ))}
         </div>
         {step < 7 && (
-          <button onClick={() => go(7)} className="text-xs font-semibold text-slate-400">
+          <button onClick={() => go(7)} className="text-xs font-semibold text-muted">
             Log in
           </button>
         )}
@@ -137,7 +137,7 @@ export default function Onboarding() {
           {step > 0 && (
             <button
               onClick={() => go(step - 1)}
-              className="rounded-xl bg-white/5 px-5 py-3.5 text-sm font-semibold text-slate-300 active:bg-white/10"
+              className="rounded-xl bg-white/5 px-5 py-3.5 text-sm font-semibold text-muted active:bg-white/10"
             >
               Back
             </button>
@@ -170,7 +170,7 @@ function Welcome() {
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.15 }}
-        className="font-display text-5xl font-bold tracking-tight text-white"
+        className="font-display text-5xl font-bold tracking-tight text-ink"
       >
         CalTrack
       </motion.h1>
@@ -178,7 +178,7 @@ function Welcome() {
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.3 }}
-        className="mt-3 max-w-xs text-lg text-slate-300"
+        className="mt-3 max-w-xs text-lg text-muted"
       >
         Track smarter. Compete with your partner. Crush your goals together.
       </motion.p>
@@ -189,8 +189,8 @@ function Welcome() {
 function BattlePeek({ name }) {
   return (
     <div className="flex flex-1 flex-col justify-center">
-      <h2 className="font-display text-center text-2xl font-bold text-white">Better together</h2>
-      <p className="mt-1 text-center text-sm text-slate-400">
+      <h2 className="font-display text-center text-2xl font-bold text-ink">Better together</h2>
+      <p className="mt-1 text-center text-sm text-muted">
         Link up with your partner and battle for the weekly XP crown.
       </p>
       <motion.div
@@ -200,13 +200,13 @@ function BattlePeek({ name }) {
         className="mt-6 rounded-3xl bg-surface-2 p-5 ring-1 ring-white/10"
       >
         <div className="flex items-center justify-between">
-          <Avatar label={name || 'You'} color="#22c55e" />
-          <span className="text-sm font-bold text-slate-500">VS</span>
-          <Avatar label="Partner" color="#ec4899" />
+          <Avatar label={name || 'You'} color="#e3b873" />
+          <span className="text-sm font-bold text-faint">VS</span>
+          <Avatar label="Partner" color="#d98ba6" />
         </div>
         <div className="mt-5 flex h-3 overflow-hidden rounded-full bg-white/10">
           <motion.div className="bg-brand" initial={{ width: 0 }} animate={{ width: '62%' }} transition={{ delay: 0.5, duration: 0.8 }} />
-          <div className="flex-1 bg-pink-500" />
+          <div className="flex-1 bg-accent" />
         </div>
         <p className="mt-3 text-center text-sm font-semibold text-brand">You're winning by 120 XP 👑</p>
       </motion.div>
@@ -223,7 +223,7 @@ function Avatar({ label, color }) {
       >
         {label.charAt(0).toUpperCase()}
       </div>
-      <p className="max-w-[6rem] truncate text-xs font-semibold text-white">{label}</p>
+      <p className="max-w-[6rem] truncate text-xs font-semibold text-ink">{label}</p>
     </div>
   )
 }
@@ -272,10 +272,10 @@ function AuthStep({ data, onBack }) {
 
   return (
     <div className="flex flex-1 flex-col justify-center">
-      <h2 className="font-display text-3xl font-bold text-white">
+      <h2 className="font-display text-3xl font-bold text-ink">
         {isSignup ? `You're all set${data.name ? `, ${data.name}` : ''}!` : 'Welcome back'}
       </h2>
-      <p className="mt-1 text-sm text-slate-400">
+      <p className="mt-1 text-sm text-muted">
         {isSignup ? 'Create your account to save your plan.' : 'Log in to continue.'}
       </p>
 
@@ -287,7 +287,7 @@ function AuthStep({ data, onBack }) {
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full rounded-xl bg-surface-2 px-4 py-3 text-base text-white placeholder:text-slate-500 outline-none ring-1 ring-white/10 focus:ring-brand"
+          className="w-full rounded-xl bg-surface-2 px-4 py-3 text-base text-ink placeholder:text-faint outline-none ring-1 ring-white/10 focus:ring-brand"
         />
         <input
           type="password"
@@ -297,9 +297,9 @@ function AuthStep({ data, onBack }) {
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full rounded-xl bg-surface-2 px-4 py-3 text-base text-white placeholder:text-slate-500 outline-none ring-1 ring-white/10 focus:ring-brand"
+          className="w-full rounded-xl bg-surface-2 px-4 py-3 text-base text-ink placeholder:text-faint outline-none ring-1 ring-white/10 focus:ring-brand"
         />
-        {error && <p className="rounded-lg bg-pink-500/10 px-3 py-2 text-sm text-pink-300">{error}</p>}
+        {error && <p className="rounded-lg bg-danger/10 px-3 py-2 text-sm text-danger">{error}</p>}
         {notice && <p className="rounded-lg bg-brand/10 px-3 py-2 text-sm text-brand">{notice}</p>}
         <button
           type="submit"
@@ -311,7 +311,7 @@ function AuthStep({ data, onBack }) {
       </form>
 
       <div className="mt-4 flex items-center justify-between text-sm">
-        <button onClick={onBack} className="font-semibold text-slate-400">
+        <button onClick={onBack} className="font-semibold text-muted">
           ← Back
         </button>
         <button
@@ -334,7 +334,7 @@ function AuthStep({ data, onBack }) {
 function Question({ title, subtitle, children }) {
   return (
     <div className="flex flex-1 flex-col pt-10">
-      <h2 className="font-display text-3xl font-bold text-white">{title}</h2>
+      <h2 className="font-display text-3xl font-bold text-ink">{title}</h2>
       {subtitle && <p className="mt-1.5 text-sm text-muted">{subtitle}</p>}
       <div className="mt-6">{children}</div>
     </div>
@@ -348,7 +348,7 @@ function TextInput({ value, onChange, placeholder, autoFocus }) {
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full rounded-xl bg-surface-2 px-4 py-3.5 text-lg text-white placeholder:text-slate-500 outline-none ring-1 ring-white/10 focus:ring-brand"
+      className="w-full rounded-xl bg-surface-2 px-4 py-3.5 text-lg text-ink placeholder:text-faint outline-none ring-1 ring-white/10 focus:ring-brand"
     />
   )
 }
@@ -362,9 +362,9 @@ function NumberInput({ value, onChange, placeholder, suffix }) {
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-transparent py-3.5 text-lg text-white placeholder:text-slate-500 outline-none"
+        className="w-full bg-transparent py-3.5 text-lg text-ink placeholder:text-faint outline-none"
       />
-      {suffix && <span className="pl-2 text-sm text-slate-500">{suffix}</span>}
+      {suffix && <span className="pl-2 text-sm text-faint">{suffix}</span>}
     </div>
   )
 }
@@ -374,7 +374,7 @@ function Choice({ active, onClick, children, block }) {
     <button
       onClick={onClick}
       className={`${block ? 'w-full' : ''} rounded-xl px-4 py-3.5 text-base font-semibold transition-colors ${
-        active ? 'bg-brand text-surface' : 'bg-surface-2 text-slate-200 ring-1 ring-white/10 active:bg-white/5'
+        active ? 'bg-brand text-surface' : 'bg-surface-2 text-ink ring-1 ring-white/10 active:bg-white/5'
       }`}
     >
       {children}

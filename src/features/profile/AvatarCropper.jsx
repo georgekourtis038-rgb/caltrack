@@ -45,7 +45,7 @@ export default function AvatarCropper({ file, color = '#14161d', onCancel, onCon
         <button onClick={onCancel} disabled={busy} className="text-sm font-semibold text-muted">
           Cancel
         </button>
-        <h2 className="text-sm font-semibold text-white">Adjust photo</h2>
+        <h2 className="text-sm font-semibold text-ink">Adjust photo</h2>
         <button onClick={confirm} disabled={busy || !pixels} className="text-sm font-bold text-brand disabled:opacity-40">
           {busy ? 'Saving…' : 'Save'}
         </button>
