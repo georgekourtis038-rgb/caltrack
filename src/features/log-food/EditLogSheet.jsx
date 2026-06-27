@@ -3,6 +3,8 @@ import BottomSheet from './BottomSheet.jsx'
 import MealTypePicker from './MealTypePicker.jsx'
 import { supabase } from '../../lib/supabase.js'
 import { parseServingGrams } from '../../lib/units.js'
+import { useAuth } from '../auth/AuthContext.jsx'
+import { deleteFoodEntry } from './logFood.js'
 
 const r0 = (n) => Math.round(n || 0)
 const r1 = (n) => Math.round((n || 0) * 10) / 10
@@ -13,6 +15,7 @@ const r1 = (n) => Math.round((n || 0) * 10) / 10
  * delete are always available.
  */
 export default function EditLogSheet({ log, onClose, onChanged }) {
+  const { user } = useAuth()
   const [shown, setShown] = useState(log)
   const [grams, setGrams] = useState('')
   const [meal, setMeal] = useState('snack')
@@ -66,13 +69,14 @@ export default function EditLogSheet({ log, onClose, onChanged }) {
   async function remove() {
     setBusy(true)
     setError(null)
-    const { error } = await supabase.from('food_logs').delete().eq('id', l.id)
-    if (error) {
-      setError(error.message)
+    try {
+      // Deletes the row AND refunds the meal's XP (prevents log/delete farming).
+      await deleteFoodEntry(user.id, l.id)
+      onChanged()
+    } catch (e) {
+      setError(e.message)
       setBusy(false)
-      return
     }
-    onChanged()
   }
 
   return (

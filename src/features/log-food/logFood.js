@@ -64,6 +64,45 @@ export async function logFoodEntry(userId, entry) {
   return { xp: XP_PER_MEAL, badges }
 }
 
+/**
+ * Delete a food entry and refund the XP it granted. Without this, log → delete
+ * → repeat farms unlimited XP. Refund is symmetric (+10 on log, −10 on delete),
+ * floored at 0, with level recomputed. Returns the XP removed so the UI can
+ * reflect it. Streaks are intentionally left unchanged (a day still counts as
+ * logged for streak purposes even after removing one of its entries).
+ */
+export async function deleteFoodEntry(userId, logId) {
+  const { error: delError } = await supabase
+    .from('food_logs')
+    .delete()
+    .eq('id', logId)
+    .eq('user_id', userId)
+  if (delError) throw delError
+
+  const { data: g, error } = await supabase
+    .from('gamification')
+    .select('total_xp, weekly_xp')
+    .eq('user_id', userId)
+    .single()
+  if (error || !g) return { xp: 0 }
+
+  const total_xp = Math.max(0, g.total_xp - XP_PER_MEAL)
+  const weekly_xp = Math.max(0, g.weekly_xp - XP_PER_MEAL)
+
+  const { error: updateError } = await supabase
+    .from('gamification')
+    .update({
+      total_xp,
+      weekly_xp,
+      level: levelForXp(total_xp),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('user_id', userId)
+  if (updateError) throw updateError
+
+  return { xp: -XP_PER_MEAL }
+}
+
 async function awardXp(userId, today) {
   const { data: g, error } = await supabase
     .from('gamification')
