@@ -152,6 +152,14 @@ function Versus({ me, myStats, partner, partnerStats, onDisconnect }) {
   const total = myStats.weeklyXp + partnerStats.weeklyXp
   const myShare = total > 0 ? (myStats.weeklyXp / total) * 100 : 50
 
+  // Each player's avatar color drives their half of the battle bar (and their
+  // stats). If both picked the same color, nudge the partner to a contrasting
+  // tone so the two sides stay distinguishable.
+  const myColor = me?.avatar_color || '#cbfb45'
+  let partnerColor = partner?.avatar_color || '#f4719c'
+  if (partnerColor.toLowerCase() === myColor.toLowerCase()) partnerColor = '#f4719c'
+  if (partnerColor.toLowerCase() === myColor.toLowerCase()) partnerColor = '#5cc8ff'
+
   const rows = [
     ['Weekly XP', myStats.weeklyXp, partnerStats.weeklyXp],
     ['Streak', `${myStats.streak}🔥`, `${partnerStats.streak}🔥`],
@@ -172,8 +180,8 @@ function Versus({ me, myStats, partner, partnerStats, onDisconnect }) {
       {/* Leaderboard bar */}
       <div className="mt-4">
         <div className="flex h-3 overflow-hidden rounded-full bg-white/10">
-          <div className="bg-brand transition-all duration-500" style={{ width: `${myShare}%` }} />
-          <div className="bg-pink-500 transition-all duration-500" style={{ width: `${100 - myShare}%` }} />
+          <div className="transition-all duration-500" style={{ width: `${myShare}%`, backgroundColor: myColor }} />
+          <div className="transition-all duration-500" style={{ width: `${100 - myShare}%`, backgroundColor: partnerColor }} />
         </div>
         <p className="mt-2 text-center text-sm font-semibold text-white">
           {lead === 0
@@ -191,9 +199,9 @@ function Versus({ me, myStats, partner, partnerStats, onDisconnect }) {
             key={label}
             className={`grid grid-cols-3 items-center px-4 py-3 ${i > 0 ? 'border-t border-white/5' : ''}`}
           >
-            <span className="text-left text-base font-bold text-brand">{mine}</span>
+            <span className="text-left text-base font-bold" style={{ color: myColor }}>{mine}</span>
             <span className="text-center text-xs uppercase tracking-wide text-slate-500">{label}</span>
-            <span className="text-right text-base font-bold text-pink-400">{theirs}</span>
+            <span className="text-right text-base font-bold" style={{ color: partnerColor }}>{theirs}</span>
           </div>
         ))}
       </div>
