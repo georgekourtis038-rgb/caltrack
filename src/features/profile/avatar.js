@@ -1,12 +1,11 @@
 import { supabase } from '../../lib/supabase.js'
 
 /**
- * Resize + center-crop an image file to a square JPEG, upload it to the user's
- * folder in the public `avatars` bucket, and save the public URL on the profile.
- * Returns the new avatar URL.
+ * Upload an already-cropped square JPEG blob as the user's avatar, save its URL
+ * on the profile, then delete any previous photos so storage never accumulates
+ * old images. Returns the new avatar URL.
  */
-export async function uploadAvatar(userId, file) {
-  const blob = await resizeToSquareJpeg(file, 512)
+export async function uploadAvatarBlob(userId, blob) {
   // Unique filename per upload avoids any CDN caching of a stale image.
   const path = `${userId}/${Date.now()}.jpg`
 
@@ -24,37 +23,27 @@ export async function uploadAvatar(userId, file) {
     .eq('id', userId)
   if (saveError) throw saveError
 
+  // Remove every other file in the user's folder (the previous avatar).
+  await removeStoredAvatars(userId, path)
+
   return url
 }
 
-/** Clear the profile photo (reverts the avatar to the color + initial). */
+/** Clear the profile photo: delete the stored file(s) and null the column. */
 export async function removeAvatar(userId) {
+  await removeStoredAvatars(userId)
   const { error } = await supabase.from('profiles').update({ avatar_url: null }).eq('id', userId)
   if (error) throw error
 }
 
-function resizeToSquareJpeg(file, size) {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    const objUrl = URL.createObjectURL(file)
-    img.onload = () => {
-      URL.revokeObjectURL(objUrl)
-      const canvas = document.createElement('canvas')
-      canvas.width = size
-      canvas.height = size
-      const ctx = canvas.getContext('2d')
-      // Cover-crop: scale so the shorter side fills, center the longer side.
-      const scale = Math.max(size / img.width, size / img.height)
-      const w = img.width * scale
-      const h = img.height * scale
-      ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h)
-      canvas.toBlob(
-        (blob) => (blob ? resolve(blob) : reject(new Error('Could not process image'))),
-        'image/jpeg',
-        0.85
-      )
-    }
-    img.onerror = () => reject(new Error('Could not read image'))
-    img.src = objUrl
-  })
+// Delete files in the user's avatar folder, optionally keeping one path.
+async function removeStoredAvatars(userId, keepPath = null) {
+  const { data: files } = await supabase.storage.from('avatars').list(userId)
+  if (!files?.length) return
+  const toRemove = files
+    .map((f) => `${userId}/${f.name}`)
+    .filter((p) => p !== keepPath)
+  if (toRemove.length) {
+    await supabase.storage.from('avatars').remove(toRemove)
+  }
 }

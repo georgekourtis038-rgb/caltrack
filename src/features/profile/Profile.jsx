@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import PageHeader from '../../components/PageHeader.jsx'
 import Avatar from '../../components/Avatar.jsx'
@@ -8,7 +8,10 @@ import { BADGES } from '../badges/badges.js'
 import { computeTargets } from '../../lib/targets.js'
 import { UnitToggle, WeightInput, HeightInput } from '../../components/BodyFields.jsx'
 import { formatWeight } from '../../lib/bodyUnits.js'
-import { uploadAvatar, removeAvatar } from './avatar.js'
+import { uploadAvatarBlob, removeAvatar } from './avatar.js'
+
+// react-easy-crop is only needed when actually cropping — load on demand.
+const AvatarCropper = lazy(() => import('./AvatarCropper.jsx'))
 
 const AVATAR_COLORS = ['#cbfb45', '#5cc8ff', '#f4719c', '#f3c969', '#a78bfa', '#fb6f92']
 
@@ -38,6 +41,7 @@ export default function Profile() {
   const [avatarUrl, setAvatarUrl] = useState(null)
   const [photoBusy, setPhotoBusy] = useState(false)
   const [photoError, setPhotoError] = useState(null)
+  const [cropFile, setCropFile] = useState(null)
   const uploadRef = useRef(null)
   const cameraRef = useRef(null)
   const [unitSystem, setUnitSystem] = useState('metric')
@@ -144,15 +148,21 @@ export default function Profile() {
     save({ unit_system: next })
   }
 
-  async function onPhotoPicked(e) {
+  function onPhotoPicked(e) {
     const file = e.target.files?.[0]
     e.target.value = '' // allow re-picking the same file
     if (!file) return
+    setPhotoError(null)
+    setCropFile(file) // open the cropper; upload happens on confirm
+  }
+
+  async function onCropConfirm(blob) {
     setPhotoBusy(true)
     setPhotoError(null)
     try {
-      const url = await uploadAvatar(user.id, file)
+      const url = await uploadAvatarBlob(user.id, blob)
       setAvatarUrl(url)
+      setCropFile(null)
     } catch (err) {
       setPhotoError(err.message)
     } finally {
@@ -449,6 +459,17 @@ export default function Profile() {
       >
         {signingOut ? 'Signing out…' : 'Sign out'}
       </button>
+
+      {cropFile && (
+        <Suspense fallback={null}>
+          <AvatarCropper
+            file={cropFile}
+            color={color}
+            onCancel={() => !photoBusy && setCropFile(null)}
+            onConfirm={onCropConfirm}
+          />
+        </Suspense>
+      )}
     </div>
   )
 }
