@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useAuth } from '../auth/AuthContext.jsx'
 import { savePendingOnboarding } from './pendingOnboarding.js'
+import { UnitToggle, WeightInput, HeightInput } from '../../components/BodyFields.jsx'
 
 const TOTAL_STEPS = 8 // 0..6 are onboarding slides, 7 is auth
 
@@ -18,10 +19,11 @@ export default function Onboarding() {
     name: '',
     age: '',
     sex: '',
-    height: '',
-    weight: '',
+    height: '', // stored in cm (canonical), regardless of display unit
+    weight: '', // stored in kg (canonical)
     goalType: '',
-    goalWeight: '',
+    goalWeight: '', // stored in kg (canonical)
+    unitSystem: 'metric',
   })
 
   const set = (key, value) => setData((d) => ({ ...d, [key]: value }))
@@ -92,9 +94,12 @@ export default function Onboarding() {
             )}
             {step === 3 && (
               <Question title="Your measurements" subtitle="Used for accurate calorie math.">
-                <NumberInput value={data.height} onChange={(v) => set('height', v)} placeholder="Height" suffix="cm" />
+                <div className="mb-3 flex justify-end">
+                  <UnitToggle system={data.unitSystem} onChange={(u) => set('unitSystem', u)} />
+                </div>
+                <HeightInput valueCm={data.height} system={data.unitSystem} onChangeCm={(v) => set('height', v ?? '')} />
                 <div className="mt-3" />
-                <NumberInput value={data.weight} onChange={(v) => set('weight', v)} placeholder="Current weight" suffix="kg" />
+                <WeightInput valueKg={data.weight} system={data.unitSystem} onChangeKg={(v) => set('weight', v ?? '')} placeholder="Current weight" />
               </Question>
             )}
             {step === 4 && (
@@ -114,7 +119,10 @@ export default function Onboarding() {
             )}
             {step === 5 && (
               <Question title="Goal weight" subtitle="What are you aiming for?">
-                <NumberInput value={data.goalWeight} onChange={(v) => set('goalWeight', v)} placeholder="Target weight" suffix="kg" />
+                <div className="mb-3 flex justify-end">
+                  <UnitToggle system={data.unitSystem} onChange={(u) => set('unitSystem', u)} />
+                </div>
+                <WeightInput valueKg={data.goalWeight} system={data.unitSystem} onChangeKg={(v) => set('goalWeight', v ?? '')} placeholder="Target weight" />
               </Question>
             )}
             {step === 6 && <BattlePeek name={data.name} />}

@@ -18,6 +18,7 @@ import { supabase } from '../../lib/supabase.js'
 import { groupByDay } from '../../lib/nutrition.js'
 import { lastNDates } from '../../lib/dates.js'
 import { logWeight, isStagnating } from './weightLog.js'
+import { kgToLbs, displayWeightToKg, weightUnitLabel } from '../../lib/bodyUnits.js'
 
 const weekday = (iso) =>
   new Date(`${iso}T12:00:00`).toLocaleDateString(undefined, { weekday: 'short' })
@@ -31,6 +32,7 @@ export default function Progress() {
   const [macros, setMacros] = useState({ protein: 0, carbs: 0, fat: 0 })
   const [streaks, setStreaks] = useState({ current: 0, longest: 0, totalDays: 0 })
   const [weights, setWeights] = useState([])
+  const [unitSystem, setUnitSystem] = useState('metric')
 
   const [weighOpen, setWeighOpen] = useState(false)
   const [weightInput, setWeightInput] = useState('')
@@ -40,7 +42,7 @@ export default function Progress() {
     if (!user) return
     const days7 = lastNDates(7)
     const [profileRes, gamRes, weekRes, allRes, weightRes] = await Promise.all([
-      supabase.from('profiles').select('calorie_goal').eq('id', user.id).single(),
+      supabase.from('profiles').select('calorie_goal, unit_system').eq('id', user.id).single(),
       supabase.from('gamification').select('current_streak, longest_streak').eq('user_id', user.id).single(),
       supabase
         .from('food_logs')
@@ -57,6 +59,7 @@ export default function Progress() {
 
     const calorieGoal = profileRes.data?.calorie_goal ?? 2000
     setGoal(calorieGoal)
+    setUnitSystem(profileRes.data?.unit_system || 'metric')
 
     const byDay = groupByDay(weekRes.data || [])
     setChart(
@@ -103,16 +106,25 @@ export default function Progress() {
 
   async function saveWeight(e) {
     e.preventDefault()
-    const value = Number(weightInput)
-    if (!value || value <= 0) return
+    // Input is in the user's display unit; store canonical kg.
+    const kg = displayWeightToKg(weightInput, unitSystem)
+    if (!kg || kg <= 0) return
     setSavingWeight(true)
-    const { bonusXp } = await logWeight(user.id, value)
+    const { bonusXp } = await logWeight(user.id, kg)
     setWeightInput('')
     setWeighOpen(false)
     setSavingWeight(false)
     if (bonusXp) celebrateXp(bonusXp, 'XP · toward goal!')
     load()
   }
+
+  // Weights are stored in kg; convert to the display unit for the chart only
+  // (stagnation logic still runs on the canonical kg values).
+  const unitLabel = weightUnitLabel(unitSystem)
+  const weightChart = weights.map((w) => ({
+    ...w,
+    weight: unitSystem === 'imperial' ? Math.round(kgToLbs(w.weight) * 10) / 10 : w.weight,
+  }))
 
   if (loading) {
     return (
@@ -188,7 +200,7 @@ export default function Progress() {
               step="0.1"
               inputMode="decimal"
               autoFocus
-              placeholder="Weight (kg)"
+              placeholder={`Weight (${unitLabel})`}
               value={weightInput}
               onChange={(e) => setWeightInput(e.target.value)}
               className="flex-1 rounded-xl bg-white/5 px-3 py-2.5 text-base text-white placeholder:text-slate-500 outline-none ring-1 ring-white/10 focus:ring-brand"
@@ -205,11 +217,12 @@ export default function Progress() {
 
         {weights.length >= 2 ? (
           <ResponsiveContainer width="100%" height={160}>
-            <LineChart data={weights} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
+            <LineChart data={weightChart} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
               <CartesianGrid stroke="rgba(255,255,255,0.05)" vertical={false} />
               <XAxis dataKey="label" tick={{ fill: '#94a3b8', fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis domain={['dataMin - 1', 'dataMax + 1']} tick={{ fill: '#94a3b8', fontSize: 11 }} axisLine={false} tickLine={false} width={40} />
               <Tooltip
+                formatter={(v) => [`${v} ${unitLabel}`, 'Weight']}
                 contentStyle={{ background: '#1e293b', border: 'none', borderRadius: 12, fontSize: 12 }}
                 labelStyle={{ color: '#e2e8f0' }}
               />

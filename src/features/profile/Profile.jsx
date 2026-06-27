@@ -5,6 +5,8 @@ import { useAuth } from '../auth/AuthContext.jsx'
 import { supabase } from '../../lib/supabase.js'
 import { BADGES } from '../badges/badges.js'
 import { computeTargets } from '../../lib/targets.js'
+import { UnitToggle, WeightInput, HeightInput } from '../../components/BodyFields.jsx'
+import { formatWeight } from '../../lib/bodyUnits.js'
 
 const AVATAR_COLORS = ['#22c55e', '#3b82f6', '#ec4899', '#f59e0b', '#8b5cf6', '#ef4444']
 
@@ -31,6 +33,7 @@ export default function Profile() {
   const [loading, setLoading] = useState(true)
 
   const [name, setName] = useState('')
+  const [unitSystem, setUnitSystem] = useState('metric')
   const [stats, setStats] = useState({ age: '', height_cm: '', sex: '', weight_goal_type: '', goal_weight: '', activity_level: '1.375' })
   const [goals, setGoals] = useState({})
   const [savedAt, setSavedAt] = useState(null)
@@ -56,6 +59,7 @@ export default function Profile() {
       setProfile(pr)
       setGam(g.data)
       setName(pr.display_name || '')
+      setUnitSystem(pr.unit_system || 'metric')
       setStats({
         age: pr.age ?? '',
         height_cm: pr.height_cm ?? '',
@@ -118,6 +122,18 @@ export default function Profile() {
       patch[f.key] = v === '' || v == null ? null : Math.round(Number(v))
     }
     save(patch)
+  }
+
+  // Persist a new stat value directly (used by the unit-aware body fields,
+  // which already produce canonical metric numbers).
+  function commitStat(key, value) {
+    setStats((s) => ({ ...s, [key]: value ?? '' }))
+    save({ [key]: value == null || value === '' ? null : Number(value) })
+  }
+
+  function changeUnitSystem(next) {
+    setUnitSystem(next)
+    save({ unit_system: next })
   }
 
   function applyRecommended() {
@@ -190,18 +206,26 @@ export default function Profile() {
 
       {/* Body stats */}
       <section className="mt-4 rounded-2xl bg-surface-2 p-5 ring-1 ring-white/5">
-        <h2 className="mb-3 text-sm font-semibold text-slate-200">Your stats</h2>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-slate-200">Your stats</h2>
+          <UnitToggle system={unitSystem} onChange={changeUnitSystem} />
+        </div>
+
         <div className="grid grid-cols-2 gap-3">
           <StatField label="Age" value={stats.age} onChange={(v) => setStats((s) => ({ ...s, age: v }))} onBlur={() => saveStat('age')} />
-          <StatField label="Height (cm)" value={stats.height_cm} onChange={(v) => setStats((s) => ({ ...s, height_cm: v }))} onBlur={() => saveStat('height_cm')} />
-          <StatField label="Goal weight (kg)" value={stats.goal_weight} onChange={(v) => setStats((s) => ({ ...s, goal_weight: v }))} onBlur={() => saveStat('goal_weight')} />
           <div>
             <span className="mb-1 block text-xs text-slate-400">Current weight</span>
             <div className="rounded-xl bg-white/5 px-3 py-2.5 text-base text-slate-300 ring-1 ring-white/10">
-              {currentWeight != null ? `${currentWeight} kg` : '—'}
+              {currentWeight != null ? formatWeight(currentWeight, unitSystem) : '—'}
             </div>
           </div>
         </div>
+
+        <p className="mb-1.5 mt-3 text-xs text-slate-400">Height</p>
+        <HeightInput valueCm={stats.height_cm} system={unitSystem} onChangeCm={(v) => commitStat('height_cm', v)} />
+
+        <p className="mb-1.5 mt-3 text-xs text-slate-400">Goal weight</p>
+        <WeightInput valueKg={stats.goal_weight} system={unitSystem} onChangeKg={(v) => commitStat('goal_weight', v)} placeholder="Target weight" />
 
         <p className="mb-1.5 mt-3 text-xs text-slate-400">Sex</p>
         <div className="grid grid-cols-2 gap-2">

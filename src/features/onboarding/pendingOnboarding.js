@@ -88,6 +88,7 @@ async function applyInner(userId, d) {
     height_cm: Number(d.height) || null,
     weight_goal_type: d.goalType || null,
     goal_weight: Number(d.goalWeight) || null,
+    unit_system: d.unitSystem || 'metric',
     onboarded: true,
     ...(targets && {
       calorie_goal: targets.calories,
