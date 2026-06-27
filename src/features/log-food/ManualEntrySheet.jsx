@@ -10,7 +10,7 @@ const EMPTY = { name: '', calories: '', protein: '', carbs: '', fat: '' }
 /**
  * Manual food entry fallback for foods not found via search.
  */
-export default function ManualEntrySheet({ open, onClose, onLogged }) {
+export default function ManualEntrySheet({ open, date, onClose, onLogged }) {
   const { user } = useAuth()
   const { celebrateXp, celebrateBadges } = useCelebrate()
   const [form, setForm] = useState(EMPTY)
@@ -34,15 +34,19 @@ export default function ManualEntrySheet({ open, onClose, onLogged }) {
     setSaving(true)
     setError(null)
     try {
-      const result = await logFoodEntry(user.id, {
-        food_name: form.name.trim(),
-        meal_type: meal,
-        calories: Math.round(Number(form.calories) || 0),
-        protein: Number(form.protein) || 0,
-        carbs: Number(form.carbs) || 0,
-        fat: Number(form.fat) || 0,
-        serving_size: null,
-      })
+      const result = await logFoodEntry(
+        user.id,
+        {
+          food_name: form.name.trim(),
+          meal_type: meal,
+          calories: Math.round(Number(form.calories) || 0),
+          protein: Number(form.protein) || 0,
+          carbs: Number(form.carbs) || 0,
+          fat: Number(form.fat) || 0,
+          serving_size: null,
+        },
+        date
+      )
       celebrateXp(result.xp)
       celebrateBadges(result.badges)
       onLogged()

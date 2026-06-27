@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import PageHeader from '../../components/PageHeader.jsx'
 import { useAuth } from '../auth/AuthContext.jsx'
@@ -11,11 +11,21 @@ import { logFoodEntry, mealTypeForNow } from './logFood.js'
 import { analyzeText, analyzeImageFile } from './aiAnalyze.js'
 import FoodDetailSheet from './FoodDetailSheet.jsx'
 import ManualEntrySheet from './ManualEntrySheet.jsx'
+import { todayISO, dayLabel } from '../../lib/dates.js'
+
+const ISO_RE = /^\d{4}-\d{2}-\d{2}$/
 
 export default function LogFood() {
   const { user } = useAuth()
   const { celebrateXp, celebrateBadges } = useCelebrate()
   const navigate = useNavigate()
+  const [params] = useSearchParams()
+
+  // When opened from a past day, log to that day and return there afterward.
+  const today = todayISO()
+  const paramDate = params.get('date')
+  const logDate = paramDate && ISO_RE.test(paramDate) && paramDate < today ? paramDate : null
+  const backTo = logDate ? `/dashboard?date=${logDate}` : '/dashboard'
 
   const [mode, setMode] = useState('search') // 'search' | 'ai'
   const [query, setQuery] = useState('')
@@ -36,25 +46,29 @@ export default function LogFood() {
   function handleLogged() {
     setSelected(null)
     setManualOpen(false)
-    navigate('/dashboard')
+    navigate(backTo)
   }
 
   async function quickLog(recent) {
     setQuickError(null)
     setQuickKey(recent.key)
     try {
-      const result = await logFoodEntry(user.id, {
-        food_name: recent.food_name,
-        meal_type: mealTypeForNow(),
-        calories: recent.calories,
-        protein: recent.protein,
-        carbs: recent.carbs,
-        fat: recent.fat,
-        serving_size: recent.serving_size,
-      })
+      const result = await logFoodEntry(
+        user.id,
+        {
+          food_name: recent.food_name,
+          meal_type: mealTypeForNow(),
+          calories: recent.calories,
+          protein: recent.protein,
+          carbs: recent.carbs,
+          fat: recent.fat,
+          serving_size: recent.serving_size,
+        },
+        logDate
+      )
       celebrateXp(result.xp)
       celebrateBadges(result.badges)
-      navigate('/dashboard')
+      navigate(backTo)
     } catch (e) {
       setQuickError(e.message)
       setQuickKey(null)
@@ -84,6 +98,13 @@ export default function LogFood() {
   return (
     <div className="mx-auto max-w-md">
       <PageHeader title="Log Food" subtitle="Search, snap, or describe it" />
+
+      {logDate && (
+        <div className="mx-5 mb-3 flex items-center gap-2 rounded-xl bg-brand/10 px-3 py-2 text-sm text-brand ring-1 ring-brand/20">
+          <span aria-hidden>🗓️</span>
+          Adding to <span className="font-semibold">{dayLabel(logDate)}</span>
+        </div>
+      )}
 
       {/* Mode toggle */}
       <div className="px-5">
@@ -241,8 +262,8 @@ export default function LogFood() {
         </button>
       </section>
 
-      <FoodDetailSheet food={selected} onClose={() => setSelected(null)} onLogged={handleLogged} />
-      <ManualEntrySheet open={manualOpen} onClose={() => setManualOpen(false)} onLogged={handleLogged} />
+      <FoodDetailSheet food={selected} date={logDate} onClose={() => setSelected(null)} onLogged={handleLogged} />
+      <ManualEntrySheet open={manualOpen} date={logDate} onClose={() => setManualOpen(false)} onLogged={handleLogged} />
     </div>
   )
 }

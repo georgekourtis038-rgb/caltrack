@@ -11,15 +11,15 @@ const MEALS = [
 /**
  * Today's food entries grouped by meal type. Hides empty groups.
  */
-export default function MealLog({ logs, onSelect }) {
+export default function MealLog({ logs, onSelect, logHref = '/log' }) {
   if (!logs.length) {
     return (
       <Link
-        to="/log"
+        to={logHref}
         className="block rounded-2xl border border-dashed border-white/15 bg-surface-2/50 p-8 text-center"
       >
-        <p className="text-sm font-medium text-muted">No meals logged yet</p>
-        <p className="mt-1 text-xs text-faint">Tap to add your first meal of the day</p>
+        <p className="text-sm font-medium text-muted">No meals logged</p>
+        <p className="mt-1 text-xs text-faint">Tap to add a meal for this day</p>
       </Link>
     )
   }

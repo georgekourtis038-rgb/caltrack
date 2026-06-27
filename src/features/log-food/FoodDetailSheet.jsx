@@ -14,7 +14,7 @@ const r1 = (n) => Math.round((n || 0) * 10) / 10
  *  - per-100g (USDA): amount + unit selector scales per-100g nutrition.
  *  - portion (AI/manual estimate): a quantity multiplier scales the estimate.
  */
-export default function FoodDetailSheet({ food, onClose, onLogged }) {
+export default function FoodDetailSheet({ food, date, onClose, onLogged }) {
   const { user } = useAuth()
   const { celebrateXp, celebrateBadges } = useCelebrate()
   const [shown, setShown] = useState(food)
@@ -64,15 +64,19 @@ export default function FoodDetailSheet({ food, onClose, onLogged }) {
     setSaving(true)
     setError(null)
     try {
-      const result = await logFoodEntry(user.id, {
-        food_name: f.food_name,
-        meal_type: meal,
-        calories: totals.calories,
-        protein: totals.protein,
-        carbs: totals.carbs,
-        fat: totals.fat,
-        serving_size: servingText,
-      })
+      const result = await logFoodEntry(
+        user.id,
+        {
+          food_name: f.food_name,
+          meal_type: meal,
+          calories: totals.calories,
+          protein: totals.protein,
+          carbs: totals.carbs,
+          fat: totals.fat,
+          serving_size: servingText,
+        },
+        date
+      )
       celebrateXp(result.xp)
       celebrateBadges(result.badges)
       onLogged()

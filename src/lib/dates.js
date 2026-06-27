@@ -11,6 +11,22 @@ export function todayISO() {
   return isoDate(new Date())
 }
 
+// Shift an ISO date by n days (noon avoids DST edges). Returns ISO.
+export function addDaysISO(iso, n) {
+  const d = new Date(`${iso}T12:00:00`)
+  d.setDate(d.getDate() + n)
+  return isoDate(d)
+}
+
+// Friendly label for a day navigator: "Today", "Yesterday", else "Mon, Jun 23".
+export function dayLabel(iso) {
+  const today = todayISO()
+  if (iso === today) return 'Today'
+  if (iso === addDaysISO(today, -1)) return 'Yesterday'
+  const d = new Date(`${iso}T12:00:00`)
+  return d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
+}
+
 // Array of the last n ISO dates ending today (oldest first).
 export function lastNDates(n) {
   const out = []

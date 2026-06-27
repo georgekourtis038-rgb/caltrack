@@ -10,11 +10,12 @@ export function todayLocalISO() {
 }
 
 /**
- * Fetches everything the Dashboard needs in parallel:
- * the user's profile (goals), gamification stats, and today's food logs.
+ * Fetches everything the Dashboard needs for a given day (defaults to today):
+ * the user's profile (goals), global gamification stats, and that day's logs.
  */
-export function useDashboardData() {
+export function useDashboardData(dateISO) {
   const { user } = useAuth()
+  const day = dateISO || todayLocalISO()
   const [reloadKey, setReloadKey] = useState(0)
   const [state, setState] = useState({
     loading: true,
@@ -29,7 +30,8 @@ export function useDashboardData() {
   useEffect(() => {
     if (!user) return
     let active = true
-    const today = todayLocalISO()
+    // Show the skeleton again when switching to a different day.
+    setState((s) => ({ ...s, loading: true }))
 
     async function load() {
       const [profileRes, gamRes, logsRes] = await Promise.all([
@@ -47,7 +49,7 @@ export function useDashboardData() {
           .from('food_logs')
           .select('id, meal_type, food_name, calories, protein, carbs, fat, serving_size')
           .eq('user_id', user.id)
-          .eq('logged_date', today)
+          .eq('logged_date', day)
           .order('created_at', { ascending: true }),
       ])
 
@@ -67,7 +69,7 @@ export function useDashboardData() {
     return () => {
       active = false
     }
-  }, [user, reloadKey])
+  }, [user, day, reloadKey])
 
   return { ...state, refresh }
 }

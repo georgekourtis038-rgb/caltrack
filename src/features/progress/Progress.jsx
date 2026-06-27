@@ -11,6 +11,7 @@ import {
   Line,
   CartesianGrid,
 } from 'recharts'
+import { useNavigate } from 'react-router-dom'
 import PageHeader from '../../components/PageHeader.jsx'
 import { useAuth } from '../auth/AuthContext.jsx'
 import { useCelebrate } from '../celebrate/CelebrationProvider.jsx'
@@ -26,6 +27,7 @@ const weekday = (iso) =>
 export default function Progress() {
   const { user } = useAuth()
   const { celebrateXp } = useCelebrate()
+  const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [goal, setGoal] = useState(2000)
   const [chart, setChart] = useState([])
@@ -65,7 +67,7 @@ export default function Progress() {
     setChart(
       days7.map((iso) => {
         const d = byDay.get(iso)
-        return { label: weekday(iso), calories: d ? Math.round(d.calories) : 0 }
+        return { date: iso, label: weekday(iso), calories: d ? Math.round(d.calories) : 0 }
       })
     )
 
@@ -172,11 +174,17 @@ export default function Progress() {
               labelStyle={{ color: '#f3ede3' }}
             />
             <ReferenceLine y={goal} stroke="#d98ba6" strokeDasharray="4 4" />
-            <Bar dataKey="calories" fill="#e3b873" radius={[5, 5, 0, 0]} />
+            <Bar
+              dataKey="calories"
+              fill="#e3b873"
+              radius={[5, 5, 0, 0]}
+              cursor="pointer"
+              onClick={(d) => d?.date && navigate(`/dashboard?date=${d.date}`)}
+            />
           </BarChart>
         </ResponsiveContainer>
         <p className="mt-1 text-center text-xs text-faint">
-          Dashed line = goal ({goal.toLocaleString()} kcal)
+          Tap a day to view or edit it · dashed line = goal ({goal.toLocaleString()} kcal)
         </p>
       </section>
 

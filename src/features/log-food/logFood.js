@@ -37,16 +37,17 @@ export async function recomputeGamification(userId) {
 }
 
 /**
- * Insert a food entry for today, then recompute score from scratch.
- * Returns { xp, badges } where xp is the change in total XP (>= 0) so the UI
- * can celebrate genuine progress.
+ * Insert a food entry for a given day (defaults to today), then recompute score
+ * from scratch. Returns { xp, badges } where xp is the change in total XP (>= 0)
+ * so the UI can celebrate genuine progress. Logging to a past day is supported
+ * (e.g. a forgotten meal) — the derived score/streak recompute handles it.
  */
-export async function logFoodEntry(userId, entry) {
+export async function logFoodEntry(userId, entry, dateISO) {
   const before = await totalXp(userId)
 
   const { error: insertError } = await supabase.from('food_logs').insert({
     user_id: userId,
-    logged_date: todayLocalISO(),
+    logged_date: dateISO || todayLocalISO(),
     meal_type: entry.meal_type,
     food_name: entry.food_name,
     calories: entry.calories,

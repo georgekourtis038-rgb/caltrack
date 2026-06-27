@@ -3,14 +3,13 @@ function Box({ className }) {
 }
 
 /**
- * Loading placeholder that mirrors the Dashboard layout.
+ * Loading placeholder that mirrors the Dashboard layout. `compact` omits the
+ * outer padding + title (used when the day navigator already renders above it).
  */
-export default function DashboardSkeleton() {
-  return (
-    <div className="mx-auto max-w-md px-5 pt-6">
-      <Box className="h-6 w-40" />
-
-      <div className="mt-4 grid grid-cols-3 gap-3">
+export default function DashboardSkeleton({ compact = false }) {
+  const body = (
+    <>
+      <div className="grid grid-cols-3 gap-3">
         <Box className="h-20" />
         <Box className="h-20" />
         <Box className="h-20" />
@@ -31,6 +30,14 @@ export default function DashboardSkeleton() {
         <Box className="h-16 w-full" />
         <Box className="h-16 w-full" />
       </div>
+    </>
+  )
+
+  if (compact) return <div className="pt-1">{body}</div>
+  return (
+    <div className="mx-auto max-w-md px-5 pt-6">
+      <Box className="mb-4 h-6 w-40" />
+      {body}
     </div>
   )
 }
