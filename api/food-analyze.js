@@ -48,14 +48,21 @@ export default async function handler(req, res) {
 
   const { mode, text, image, mediaType } = req.body || {}
 
+  const caption = (text || '').trim()
+
   let userContent
   if (mode === 'image' && image) {
+    // Photo, optionally with a user caption to refine the estimate
+    // (e.g. "about 300g", "cooked in 2 tbsp olive oil", "this is the left plate").
+    const prompt = caption
+      ? `Identify this food and estimate its nutrition for the visible portion. Use this note from the user to refine the estimate (it may specify amount, ingredients, or which item to focus on): "${caption}"`
+      : 'Identify this food and estimate its nutrition for the visible portion.'
     userContent = [
       { type: 'image', source: { type: 'base64', media_type: mediaType || 'image/jpeg', data: image } },
-      { type: 'text', text: 'Identify this food and estimate its nutrition for the visible portion.' },
+      { type: 'text', text: prompt },
     ]
-  } else if (mode === 'text' && text?.trim()) {
-    userContent = [{ type: 'text', text: `Estimate nutrition for: ${text.trim()}` }]
+  } else if (mode === 'text' && caption) {
+    userContent = [{ type: 'text', text: `Estimate nutrition for: ${caption}` }]
   } else {
     return res.status(400).json({ error: 'Provide either text or an image' })
   }

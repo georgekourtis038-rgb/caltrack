@@ -15,9 +15,9 @@ export function analyzeText(text) {
   return postAnalyze({ mode: 'text', text })
 }
 
-export async function analyzeImageFile(file) {
+export async function analyzeImageFile(file, caption = '') {
   const { base64, mediaType } = await resizeImageToBase64(file)
-  return postAnalyze({ mode: 'image', image: base64, mediaType })
+  return postAnalyze({ mode: 'image', image: base64, mediaType, text: caption })
 }
 
 // Downscale + re-encode to JPEG to keep the upload small and fast.

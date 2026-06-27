@@ -90,7 +90,8 @@ export default function LogFood() {
   function onFilePicked(e) {
     const file = e.target.files?.[0]
     e.target.value = '' // allow re-picking the same file
-    if (file) runAnalyze(analyzeImageFile(file))
+    // Any text typed above is sent as a caption to refine the photo estimate.
+    if (file) runAnalyze(analyzeImageFile(file, aiText.trim()))
   }
 
   const q = query.trim()
@@ -215,13 +216,13 @@ export default function LogFood() {
             className="mt-4 px-5"
           >
             <label className="mb-2 block text-xs font-medium uppercase tracking-wide text-faint">
-              Describe your meal
+              Describe it — or caption your photo
             </label>
             <textarea
               rows={2}
               value={aiText}
               onChange={(e) => setAiText(e.target.value)}
-              placeholder="e.g. 3 scrambled eggs with cheddar and toast"
+              placeholder="e.g. 3 scrambled eggs with cheddar — or “about 300g, cooked in olive oil”"
               className="w-full resize-none rounded-xl bg-surface-2 px-4 py-3 text-base text-ink placeholder:text-faint outline-none ring-1 ring-white/10 focus:ring-brand"
             />
             <button
@@ -233,7 +234,9 @@ export default function LogFood() {
             </button>
 
             <div className="my-4 flex items-center gap-3 text-xs text-faint">
-              <span className="h-px flex-1 bg-white/10" /> or <span className="h-px flex-1 bg-white/10" />
+              <span className="h-px flex-1 bg-white/10" />
+              {aiText.trim() ? 'or add a photo with this caption' : 'or snap a photo'}
+              <span className="h-px flex-1 bg-white/10" />
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -242,6 +245,11 @@ export default function LogFood() {
             </div>
             <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onFilePicked} />
             <input ref={uploadRef} type="file" accept="image/*" className="hidden" onChange={onFilePicked} />
+            <p className="mt-2 text-center text-xs text-faint">
+              {aiText.trim()
+                ? 'Your note will be sent along with the photo for a sharper estimate.'
+                : 'Tip: add a note above (amount, ingredients) to sharpen the photo estimate.'}
+            </p>
 
             {aiBusy && (
               <p className="mt-4 text-center text-sm text-muted">
