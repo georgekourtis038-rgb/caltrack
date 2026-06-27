@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import PageHeader from '../../components/PageHeader.jsx'
+import Avatar from '../../components/Avatar.jsx'
 import { useAuth } from '../auth/AuthContext.jsx'
 import { supabase } from '../../lib/supabase.js'
 import { groupByDay, isGoalHit } from '../../lib/nutrition.js'
@@ -51,7 +52,7 @@ export default function Battle() {
     if (!user) return
     const { data: myProfile } = await supabase
       .from('profiles')
-      .select('display_name, calorie_goal, avatar_color, partner_id')
+      .select('display_name, calorie_goal, avatar_color, avatar_url, partner_id')
       .eq('id', user.id)
       .single()
     setMe(myProfile)
@@ -60,7 +61,7 @@ export default function Battle() {
     if (myProfile?.partner_id) {
       const { data: partnerProfile } = await supabase
         .from('profiles')
-        .select('display_name, calorie_goal, avatar_color')
+        .select('display_name, calorie_goal, avatar_color, avatar_url')
         .eq('id', myProfile.partner_id)
         .single()
       setPartner({ id: myProfile.partner_id, ...partnerProfile })
@@ -212,17 +213,10 @@ function Versus({ me, myStats, partner, partnerStats, onDisconnect }) {
 }
 
 function Head({ profile, label, align }) {
-  const color = profile?.avatar_color || '#22c55e'
-  const initial = (label || '?').trim().charAt(0).toUpperCase()
   return (
     <div className={align === 'right' ? 'text-right' : 'text-left'}>
-      <div
-        className={`mb-1 flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold text-surface ${
-          align === 'right' ? 'ml-auto' : ''
-        }`}
-        style={{ backgroundColor: color }}
-      >
-        {initial}
+      <div className={`mb-1 ${align === 'right' ? 'flex justify-end' : ''}`}>
+        <Avatar url={profile?.avatar_url} color={profile?.avatar_color || '#cbfb45'} name={label} size={52} />
       </div>
       <p className="max-w-[7rem] truncate text-sm font-semibold text-white">{label}</p>
     </div>

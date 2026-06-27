@@ -1,14 +1,16 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import PageHeader from '../../components/PageHeader.jsx'
+import Avatar from '../../components/Avatar.jsx'
 import { useAuth } from '../auth/AuthContext.jsx'
 import { supabase } from '../../lib/supabase.js'
 import { BADGES } from '../badges/badges.js'
 import { computeTargets } from '../../lib/targets.js'
 import { UnitToggle, WeightInput, HeightInput } from '../../components/BodyFields.jsx'
 import { formatWeight } from '../../lib/bodyUnits.js'
+import { uploadAvatar, removeAvatar } from './avatar.js'
 
-const AVATAR_COLORS = ['#22c55e', '#3b82f6', '#ec4899', '#f59e0b', '#8b5cf6', '#ef4444']
+const AVATAR_COLORS = ['#cbfb45', '#5cc8ff', '#f4719c', '#f3c969', '#a78bfa', '#fb6f92']
 
 const ACTIVITY = [
   ['1.2', 'Sedentary'],
@@ -33,6 +35,11 @@ export default function Profile() {
   const [loading, setLoading] = useState(true)
 
   const [name, setName] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState(null)
+  const [photoBusy, setPhotoBusy] = useState(false)
+  const [photoError, setPhotoError] = useState(null)
+  const uploadRef = useRef(null)
+  const cameraRef = useRef(null)
   const [unitSystem, setUnitSystem] = useState('metric')
   const [stats, setStats] = useState({ age: '', height_cm: '', sex: '', weight_goal_type: '', goal_weight: '', activity_level: '1.375' })
   const [goals, setGoals] = useState({})
@@ -59,6 +66,7 @@ export default function Profile() {
       setProfile(pr)
       setGam(g.data)
       setName(pr.display_name || '')
+      setAvatarUrl(pr.avatar_url || null)
       setUnitSystem(pr.unit_system || 'metric')
       setStats({
         age: pr.age ?? '',
@@ -136,6 +144,35 @@ export default function Profile() {
     save({ unit_system: next })
   }
 
+  async function onPhotoPicked(e) {
+    const file = e.target.files?.[0]
+    e.target.value = '' // allow re-picking the same file
+    if (!file) return
+    setPhotoBusy(true)
+    setPhotoError(null)
+    try {
+      const url = await uploadAvatar(user.id, file)
+      setAvatarUrl(url)
+    } catch (err) {
+      setPhotoError(err.message)
+    } finally {
+      setPhotoBusy(false)
+    }
+  }
+
+  async function clearPhoto() {
+    setPhotoBusy(true)
+    setPhotoError(null)
+    try {
+      await removeAvatar(user.id)
+      setAvatarUrl(null)
+    } catch (err) {
+      setPhotoError(err.message)
+    } finally {
+      setPhotoBusy(false)
+    }
+  }
+
   function applyRecommended() {
     if (!recommended) return
     const next = {
@@ -162,7 +199,6 @@ export default function Profile() {
   }
 
   const color = profile?.avatar_color || AVATAR_COLORS[0]
-  const initial = (name || user?.email || '?').trim().charAt(0).toUpperCase()
 
   return (
     <div className="mx-auto max-w-md px-5 pt-6">
@@ -171,9 +207,23 @@ export default function Profile() {
       {/* Identity */}
       <section className="rounded-2xl bg-surface-2 p-5 ring-1 ring-white/5">
         <div className="flex items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full text-2xl font-bold text-surface" style={{ backgroundColor: color }}>
-            {initial}
-          </div>
+          <button
+            onClick={() => uploadRef.current?.click()}
+            disabled={photoBusy}
+            aria-label="Change profile photo"
+            className="relative shrink-0 rounded-full active:scale-95 disabled:opacity-60"
+          >
+            <Avatar url={avatarUrl} color={color} name={name || user?.email} size={64} />
+            <span className="absolute -bottom-0.5 -right-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-brand text-surface ring-2 ring-surface-2">
+              {photoBusy ? (
+                <span className="block h-3 w-3 animate-spin rounded-full border-2 border-surface/40 border-t-surface" />
+              ) : (
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+              )}
+            </span>
+          </button>
           <div className="min-w-0 flex-1">
             <input
               value={name}
@@ -184,13 +234,44 @@ export default function Profile() {
             <p className="truncate text-sm text-slate-400">{user?.email}</p>
           </div>
         </div>
+
         <div className="mt-4 flex items-center gap-3">
           <span className="rounded-md bg-brand px-2 py-0.5 text-xs font-bold text-surface">Level {gam?.level ?? 1}</span>
-          <span className="text-sm text-slate-300">{(gam?.total_xp ?? 0).toLocaleString()} XP</span>
+          <span className="tnum text-sm text-slate-300">{(gam?.total_xp ?? 0).toLocaleString()} XP</span>
         </div>
+
+        {/* Photo controls */}
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <button
+            onClick={() => cameraRef.current?.click()}
+            disabled={photoBusy}
+            className="rounded-xl bg-white/5 py-2.5 text-sm font-semibold text-white ring-1 ring-white/10 active:bg-white/10 disabled:opacity-50"
+          >
+            📷 Take photo
+          </button>
+          <button
+            onClick={() => uploadRef.current?.click()}
+            disabled={photoBusy}
+            className="rounded-xl bg-white/5 py-2.5 text-sm font-semibold text-white ring-1 ring-white/10 active:bg-white/10 disabled:opacity-50"
+          >
+            🖼️ Upload photo
+          </button>
+        </div>
+        {avatarUrl && (
+          <button onClick={clearPhoto} disabled={photoBusy} className="mt-2 text-xs font-semibold text-danger">
+            Remove photo
+          </button>
+        )}
+        {photoError && <p className="mt-2 text-xs text-danger">{photoError}</p>}
+        <input ref={cameraRef} type="file" accept="image/*" capture="user" className="hidden" onChange={onPhotoPicked} />
+        <input ref={uploadRef} type="file" accept="image/*" className="hidden" onChange={onPhotoPicked} />
+
+        {/* Avatar color (used when no photo is set) */}
         <div className="mt-4">
-          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">Avatar color</p>
-          <div className="flex gap-2">
+          <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+            Avatar color {avatarUrl && <span className="text-faint">(shown when no photo)</span>}
+          </p>
+          <div className="flex items-center gap-2">
             {AVATAR_COLORS.map((c) => (
               <button
                 key={c}
@@ -200,6 +281,19 @@ export default function Profile() {
                 style={{ backgroundColor: c }}
               />
             ))}
+            {/* Custom color picker */}
+            <label
+              className="relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-full ring-1 ring-white/20 active:scale-90"
+              style={{ background: 'conic-gradient(red, yellow, lime, cyan, blue, magenta, red)' }}
+              aria-label="Pick a custom color"
+            >
+              <input
+                type="color"
+                value={color}
+                onChange={(e) => save({ avatar_color: e.target.value })}
+                className="absolute inset-0 cursor-pointer opacity-0"
+              />
+            </label>
           </div>
         </div>
       </section>
