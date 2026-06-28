@@ -26,6 +26,17 @@ export function isGoalHit(dayCalories, goal) {
   return dayCalories >= goal * 0.9 && dayCalories <= goal * 1.1
 }
 
+/**
+ * A day's adherence score (0..100) — must match the SQL recompute_gamification
+ * formula. 0 if nothing logged; otherwise 20 (floor) → 100 (exactly at goal).
+ */
+export function dayAdherenceXp(calories, goal) {
+  if (!calories || calories <= 0 || !goal || goal <= 0) return 0
+  const deviation = Math.abs(calories / goal - 1)
+  const adherence = Math.min(1, Math.max(0, 1 - deviation / 0.5))
+  return Math.round(20 + 80 * adherence)
+}
+
 /** Count of days (within the supplied logs) that hit the calorie goal. */
 export function goalsHitCount(logs, goal) {
   let n = 0
