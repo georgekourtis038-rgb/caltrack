@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 import PageHeader from '../../components/PageHeader.jsx'
 import Avatar from '../../components/Avatar.jsx'
+import DayDetailSheet from './DayDetailSheet.jsx'
 import { useAuth } from '../auth/AuthContext.jsx'
 import { supabase } from '../../lib/supabase.js'
 import { dayAdherenceXp } from '../../lib/nutrition.js'
@@ -8,11 +10,6 @@ import { isoDate, todayISO, relativeTime } from '../../lib/dates.js'
 
 const WEEKDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
 
-function monthStartISO(d = new Date()) {
-  return isoDate(new Date(d.getFullYear(), d.getMonth(), 1))
-}
-
-// Map logged_date -> total calories for that day.
 function dailyCalories(logs) {
   const m = {}
   for (const l of logs || []) {
@@ -23,11 +20,7 @@ function dailyCalories(logs) {
 
 async function loadOverall(userId) {
   const [gam, badges] = await Promise.all([
-    supabase
-      .from('gamification')
-      .select('current_streak, level, updated_at')
-      .eq('user_id', userId)
-      .single(),
+    supabase.from('gamification').select('current_streak, level, updated_at').eq('user_id', userId).single(),
     supabase.from('badges').select('*', { count: 'exact', head: true }).eq('user_id', userId),
   ])
   return {
@@ -40,62 +33,69 @@ async function loadOverall(userId) {
 
 export default function Battle() {
   const { user } = useAuth()
+  const now = new Date()
   const [me, setMe] = useState(null)
   const [partner, setPartner] = useState(null)
-  const [data, setData] = useState(null) // { myGoal, theirGoal, myCal, theirCal, myOverall, theirOverall }
+  const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [viewed, setViewed] = useState({ year: now.getFullYear(), month: now.getMonth() })
+  const [selectedDay, setSelectedDay] = useState(null)
 
   const [email, setEmail] = useState('')
   const [linking, setLinking] = useState(false)
   const [linkError, setLinkError] = useState(null)
 
-  const load = useCallback(async () => {
-    if (!user) return
-    const { data: myProfile } = await supabase
-      .from('profiles')
-      .select('display_name, calorie_goal, avatar_color, avatar_url, partner_id')
-      .eq('id', user.id)
-      .single()
-    setMe(myProfile)
+  const load = useCallback(
+    async (view) => {
+      if (!user) return
+      const { data: myProfile } = await supabase
+        .from('profiles')
+        .select('display_name, calorie_goal, avatar_color, avatar_url, partner_id')
+        .eq('id', user.id)
+        .single()
+      setMe(myProfile)
 
-    if (!myProfile?.partner_id) {
-      setPartner(null)
-      setData(null)
+      if (!myProfile?.partner_id) {
+        setPartner(null)
+        setData(null)
+        setLoading(false)
+        return
+      }
+
+      const { data: partnerProfile } = await supabase
+        .from('profiles')
+        .select('display_name, calorie_goal, avatar_color, avatar_url')
+        .eq('id', myProfile.partner_id)
+        .single()
+      setPartner({ id: myProfile.partner_id, ...partnerProfile })
+
+      const start = isoDate(new Date(view.year, view.month, 1))
+      const end = isoDate(new Date(view.year, view.month + 1, 0))
+      const [myLogs, theirLogs, myOverall, theirOverall] = await Promise.all([
+        supabase.from('food_logs').select('logged_date, calories').eq('user_id', user.id).gte('logged_date', start).lte('logged_date', end),
+        supabase.from('food_logs').select('logged_date, calories').eq('user_id', myProfile.partner_id).gte('logged_date', start).lte('logged_date', end),
+        loadOverall(user.id),
+        loadOverall(myProfile.partner_id),
+      ])
+
+      setData({
+        myGoal: myProfile.calorie_goal ?? 2000,
+        theirGoal: partnerProfile?.calorie_goal ?? 2000,
+        myCal: dailyCalories(myLogs.data),
+        theirCal: dailyCalories(theirLogs.data),
+        myOverall,
+        theirOverall,
+      })
       setLoading(false)
-      return
-    }
-
-    const { data: partnerProfile } = await supabase
-      .from('profiles')
-      .select('display_name, calorie_goal, avatar_color, avatar_url')
-      .eq('id', myProfile.partner_id)
-      .single()
-    setPartner({ id: myProfile.partner_id, ...partnerProfile })
-
-    const since = monthStartISO()
-    const [myLogs, theirLogs, myOverall, theirOverall] = await Promise.all([
-      supabase.from('food_logs').select('logged_date, calories').eq('user_id', user.id).gte('logged_date', since),
-      supabase.from('food_logs').select('logged_date, calories').eq('user_id', myProfile.partner_id).gte('logged_date', since),
-      loadOverall(user.id),
-      loadOverall(myProfile.partner_id),
-    ])
-
-    setData({
-      myGoal: myProfile.calorie_goal ?? 2000,
-      theirGoal: partnerProfile?.calorie_goal ?? 2000,
-      myCal: dailyCalories(myLogs.data),
-      theirCal: dailyCalories(theirLogs.data),
-      myOverall,
-      theirOverall,
-    })
-    setLoading(false)
-  }, [user])
+    },
+    [user]
+  )
 
   useEffect(() => {
-    load()
-  }, [load])
+    load(viewed)
+  }, [load, viewed])
 
-  // Realtime: a partner log triggers their gamification update → refresh.
+  // Realtime: a partner log updates their gamification row → refresh the view.
   useEffect(() => {
     if (!partner?.id) return
     const channel = supabase
@@ -103,13 +103,13 @@ export default function Battle() {
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'gamification', filter: `user_id=eq.${partner.id}` },
-        () => load()
+        () => load(viewed)
       )
       .subscribe()
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [partner?.id, load])
+  }, [partner?.id, load, viewed])
 
   async function connect(e) {
     e.preventDefault()
@@ -121,13 +121,13 @@ export default function Battle() {
     if (!res?.ok) return setLinkError(res?.error || 'Could not link')
     setEmail('')
     setLoading(true)
-    load()
+    load(viewed)
   }
 
   async function disconnect() {
     await supabase.rpc('unlink_partner')
     setLoading(true)
-    load()
+    load(viewed)
   }
 
   if (loading) {
@@ -138,12 +138,37 @@ export default function Battle() {
     )
   }
 
+  // Distinct battle colors (shared by the bars, calendar, and detail sheet).
+  const myColor = me?.avatar_color || '#e3b873'
+  let theirColor = partner?.avatar_color || '#d98ba6'
+  if (theirColor.toLowerCase() === myColor.toLowerCase()) theirColor = '#6fd0c5'
+  const colors = { myColor, theirColor }
+
   return (
     <div className="mx-auto max-w-md px-5 pt-6">
       <PageHeader title="Battle" subtitle="A new contest every day" />
 
       {partner && data ? (
-        <DailyBattle me={me} partner={partner} data={data} onDisconnect={disconnect} />
+        <>
+          <DailyBattle
+            me={me}
+            partner={partner}
+            data={data}
+            colors={colors}
+            viewed={viewed}
+            setViewed={setViewed}
+            onSelectDay={setSelectedDay}
+            onDisconnect={disconnect}
+          />
+          <DayDetailSheet
+            day={selectedDay}
+            me={me}
+            partner={partner}
+            goals={{ myGoal: data.myGoal, theirGoal: data.theirGoal }}
+            colors={colors}
+            onClose={() => setSelectedDay(null)}
+          />
+        </>
       ) : (
         <ConnectPartner email={email} setEmail={setEmail} onSubmit={connect} linking={linking} error={linkError} />
       )}
@@ -151,31 +176,25 @@ export default function Battle() {
   )
 }
 
-function DailyBattle({ me, partner, data, onDisconnect }) {
+function DailyBattle({ me, partner, data, colors, viewed, setViewed, onSelectDay, onDisconnect }) {
+  const { myColor, theirColor } = colors
   const today = todayISO()
-  const myName = 'You'
   const theirName = partner.display_name || 'Partner'
 
-  // Distinct battle colors.
-  const myColor = me?.avatar_color || '#e3b873'
-  let theirColor = partner?.avatar_color || '#d98ba6'
-  if (theirColor.toLowerCase() === myColor.toLowerCase()) theirColor = '#6fd0c5'
+  const score = (cal, who) => dayAdherenceXp(cal, who === 'me' ? data.myGoal : data.theirGoal)
 
-  const score = (cal, who) =>
-    dayAdherenceXp(cal, who === 'me' ? data.myGoal : data.theirGoal)
-
-  // Today's scores.
   const myToday = score(data.myCal[today] || 0, 'me')
   const theirToday = score(data.theirCal[today] || 0, 'them')
   const todayTotal = myToday + theirToday
   const myShare = todayTotal > 0 ? (myToday / todayTotal) * 100 : 50
 
-  // Build the month calendar of daily winners.
-  const now = new Date()
-  const year = now.getFullYear()
-  const month = now.getMonth()
+  // Calendar for the viewed month.
+  const { year, month } = viewed
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const leadingBlanks = (new Date(year, month, 1).getDay() + 6) % 7 // Mon-based
+
+  const now = new Date()
+  const canNext = year < now.getFullYear() || (year === now.getFullYear() && month < now.getMonth())
 
   const cells = []
   for (let i = 0; i < leadingBlanks; i++) cells.push(null)
@@ -186,23 +205,29 @@ function DailyBattle({ me, partner, data, onDisconnect }) {
     const future = iso > today
     const myXp = score(data.myCal[iso] || 0, 'me')
     const theirXp = score(data.theirCal[iso] || 0, 'them')
-    let winner = null // 'me' | 'them' | 'tie' | null(no data) | 'future'
+    let winner = 'none'
     if (future) winner = 'future'
-    else if (myXp === 0 && theirXp === 0) winner = null
+    else if (myXp === 0 && theirXp === 0) winner = 'none'
     else if (myXp === theirXp) winner = 'tie'
     else winner = myXp > theirXp ? 'me' : 'them'
     if (winner === 'me') myWins++
     if (winner === 'them') theirWins++
-    cells.push({ d, iso, winner, isToday: iso === today })
+    cells.push({ d, iso, winner, isToday: iso === today, future })
   }
 
-  const monthName = now.toLocaleDateString(undefined, { month: 'long' })
+  const monthLabel = new Date(year, month, 1).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+
+  function shiftMonth(delta) {
+    if (delta > 0 && !canNext) return
+    const nm = month + delta
+    setViewed({ year: year + Math.floor(nm / 12), month: ((nm % 12) + 12) % 12 })
+  }
 
   return (
     <>
       {/* Heads */}
       <div className="flex items-center justify-between">
-        <Head profile={me} label={myName} align="left" />
+        <Head profile={me} label="You" align="left" />
         <span className="font-display text-sm font-bold text-faint">VS</span>
         <Head profile={partner} label={theirName} align="right" />
       </div>
@@ -211,16 +236,12 @@ function DailyBattle({ me, partner, data, onDisconnect }) {
       <div className="mt-5 rounded-2xl bg-surface-2 p-5 ring-1 ring-white/5">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="font-display text-base font-bold text-ink">Today’s battle</h2>
-          <span className="rounded-md bg-white/5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted">
-            Live
-          </span>
+          <span className="rounded-md bg-white/5 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted">Live</span>
         </div>
-
         <div className="flex h-3 overflow-hidden rounded-full bg-white/10">
           <div className="transition-all duration-500" style={{ width: `${myShare}%`, backgroundColor: myColor }} />
           <div className="transition-all duration-500" style={{ width: `${100 - myShare}%`, backgroundColor: theirColor }} />
         </div>
-
         <div className="mt-2 flex items-center justify-between">
           <span className="tnum text-lg font-bold" style={{ color: myColor }}>{myToday}</span>
           <span className="text-center text-sm font-semibold text-ink">{todayHeadline(myToday, theirToday, theirName)}</span>
@@ -232,12 +253,16 @@ function DailyBattle({ me, partner, data, onDisconnect }) {
       {/* Month win calendar */}
       <div className="mt-4 rounded-2xl bg-surface-2 p-5 ring-1 ring-white/5">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="font-display text-base font-bold text-ink">{monthName}</h2>
-          <span className="text-sm font-semibold">
-            <span style={{ color: myColor }}>{myWins}</span>
-            <span className="text-faint"> – </span>
-            <span style={{ color: theirColor }}>{theirWins}</span>
-          </span>
+          <MonthChevron dir="left" onClick={() => shiftMonth(-1)} />
+          <div className="text-center">
+            <h2 className="font-display text-base font-bold text-ink">{monthLabel}</h2>
+            <span className="text-xs font-semibold">
+              <span style={{ color: myColor }}>{myWins}</span>
+              <span className="text-faint"> – </span>
+              <span style={{ color: theirColor }}>{theirWins}</span>
+            </span>
+          </div>
+          <MonthChevron dir="right" onClick={() => shiftMonth(1)} disabled={!canNext} />
         </div>
 
         <div className="grid grid-cols-7 gap-1.5">
@@ -248,19 +273,17 @@ function DailyBattle({ me, partner, data, onDisconnect }) {
             c === null ? (
               <div key={`b${i}`} />
             ) : (
-              <DayCell key={c.iso} cell={c} myColor={myColor} theirColor={theirColor} />
+              <DayCell key={c.iso} cell={c} myColor={myColor} theirColor={theirColor} onSelect={onSelectDay} />
             )
           )}
         </div>
 
-        {/* Legend */}
         <div className="mt-4 flex items-center justify-center gap-4 text-[11px] text-muted">
-          <Legend color={myColor} label={myName} />
+          <Legend color={myColor} label="You" />
           <Legend color={theirColor} label={theirName} />
-          <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-white/15" /> Tie
-          </span>
+          <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-white/15" /> Tie</span>
         </div>
+        <p className="mt-2 text-center text-[11px] text-faint">Tap a day to see both your meals</p>
       </div>
 
       {/* Overall standing */}
@@ -278,9 +301,7 @@ function DailyBattle({ me, partner, data, onDisconnect }) {
         ))}
       </div>
 
-      <p className="mt-3 text-center text-xs text-faint">
-        {theirName} last active {relativeTime(data.theirOverall.updatedAt)}
-      </p>
+      <p className="mt-3 text-center text-xs text-faint">{theirName} last active {relativeTime(data.theirOverall.updatedAt)}</p>
 
       <button
         onClick={onDisconnect}
@@ -298,24 +319,43 @@ function todayHeadline(mine, theirs, theirName) {
   return mine > theirs ? 'You’re ahead' : `${theirName} is ahead`
 }
 
-function DayCell({ cell, myColor, theirColor }) {
-  const base = 'flex aspect-square items-center justify-center rounded-lg text-xs font-semibold'
+function MonthChevron({ dir, onClick, disabled }) {
+  return (
+    <motion.button
+      whileTap={disabled ? undefined : { scale: 0.88 }}
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={dir === 'left' ? 'Previous month' : 'Next month'}
+      className="flex h-8 w-8 items-center justify-center rounded-full text-ink ring-1 ring-white/10 transition-opacity active:bg-white/5 disabled:opacity-25"
+    >
+      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+        {dir === 'left' ? <path d="M15 6l-6 6 6 6" /> : <path d="M9 6l6 6-6 6" />}
+      </svg>
+    </motion.button>
+  )
+}
+
+function DayCell({ cell, myColor, theirColor, onSelect }) {
+  const base = 'flex aspect-square w-full items-center justify-center rounded-lg text-xs font-semibold transition-transform active:scale-90'
   const ring = cell.isToday ? ' ring-2 ring-ink/50' : ''
 
-  if (cell.winner === 'future') {
-    return <div className={`${base}${ring} text-faint/50`}>{cell.d}</div>
+  if (cell.future) {
+    return <div className={`${base.replace('active:scale-90', '')}${ring} text-faint/40`}>{cell.d}</div>
   }
-  if (cell.winner === null) {
-    return <div className={`${base}${ring} bg-white/[0.03] text-faint`}>{cell.d}</div>
+
+  let cls = `${base}${ring} `
+  let style
+  if (cell.winner === 'none') cls += 'bg-white/[0.03] text-faint'
+  else if (cell.winner === 'tie') cls += 'bg-white/15 text-ink'
+  else {
+    cls += 'text-surface'
+    style = { backgroundColor: cell.winner === 'me' ? myColor : theirColor }
   }
-  if (cell.winner === 'tie') {
-    return <div className={`${base}${ring} bg-white/15 text-ink`}>{cell.d}</div>
-  }
-  const color = cell.winner === 'me' ? myColor : theirColor
+
   return (
-    <div className={`${base}${ring} text-surface`} style={{ backgroundColor: color }}>
+    <button type="button" onClick={() => onSelect({ iso: cell.iso })} className={cls} style={style}>
       {cell.d}
-    </div>
+    </button>
   )
 }
 
