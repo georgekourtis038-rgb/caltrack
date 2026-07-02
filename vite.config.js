@@ -59,6 +59,9 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
         // SPA navigation fallback should never shadow API/auth requests.
         navigateFallbackDenylist: [/^\/api/, /^\/auth/],
+        // Pull in our push/notificationclick listeners without hand-writing the
+        // whole SW — the generated worker keeps owning precache + offline.
+        importScripts: ['/push-sw.js'],
       },
       devOptions: {
         enabled: true,

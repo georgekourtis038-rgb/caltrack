@@ -1,6 +1,8 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import PageHeader from '../../components/PageHeader.jsx'
+import NotificationSettings from '../notifications/NotificationSettings.jsx'
 import Avatar from '../../components/Avatar.jsx'
 import { useAuth } from '../auth/AuthContext.jsx'
 import { supabase } from '../../lib/supabase.js'
@@ -31,6 +33,8 @@ const GOAL_FIELDS = [
 
 export default function Profile() {
   const { user, signOut } = useAuth()
+  const location = useLocation()
+  const notifRef = useRef(null)
   const [profile, setProfile] = useState(null)
   const [gam, setGam] = useState(null)
   const [unlocked, setUnlocked] = useState({})
@@ -110,6 +114,15 @@ export default function Profile() {
       }),
     [stats, currentWeight]
   )
+
+  // When arriving from the "Set up" popup, scroll the Reminders card into view.
+  useEffect(() => {
+    if (loading || location.state?.scrollTo !== 'notifications') return
+    const t = setTimeout(() => {
+      notifRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 150)
+    return () => clearTimeout(t)
+  }, [loading, location.state])
 
   async function save(patch) {
     const { error } = await supabase.from('profiles').update(patch).eq('id', user.id)
@@ -451,6 +464,11 @@ export default function Profile() {
           })}
         </div>
       </section>
+
+      {/* Notification reminders (scroll target for the announcement popup) */}
+      <div ref={notifRef} className="scroll-mt-6">
+        <NotificationSettings userId={user.id} />
+      </div>
 
       <button
         onClick={handleSignOut}

@@ -4,6 +4,7 @@ import { useAuth } from './features/auth/AuthContext.jsx'
 import Onboarding from './features/onboarding/Onboarding.jsx'
 import { applyPendingOnboarding, hasPendingOnboarding } from './features/onboarding/pendingOnboarding.js'
 import BottomNav from './components/BottomNav.jsx'
+import PushAnnouncement from './features/notifications/PushAnnouncement.jsx'
 import Dashboard from './features/dashboard/Dashboard.jsx'
 import LogFood from './features/log-food/LogFood.jsx'
 import Battle from './features/battle/Battle.jsx'
@@ -82,6 +83,7 @@ export default function App() {
       </main>
 
       <BottomNav />
+      <PushAnnouncement />
     </div>
   )
 }
