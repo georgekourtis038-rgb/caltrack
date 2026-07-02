@@ -43,20 +43,20 @@ Apply `supabase/migrations/20260702000000_push_notifications.sql` (via the
 Supabase SQL editor or `supabase db push`).
 
 ### 4. Scheduler
-`vercel.json` already declares an hourly cron for `/api/send-reminders`.
+This project runs on Vercel's **Hobby** plan, which only allows *daily* crons —
+too coarse for per-timezone reminders. So the schedule lives in **Supabase
+`pg_cron`** instead (set up via the `schedule_meal_reminders` migration): it
+calls `/api/send-reminders` hourly with the `CRON_SECRET` bearer token. This
+works on any plan and is free.
 
-> **Heads-up on Vercel plan limits:** the Hobby plan only *guarantees* cron runs
-> roughly **once per day**. Hourly firing (needed so reminders land at each
-> user's local 12/16/20) requires the **Pro** plan. If you're on Hobby, use
-> Supabase `pg_cron` instead — enable the `pg_cron` + `pg_net` extensions and:
-> ```sql
-> select cron.schedule('meal-reminders', '0 * * * *', $$
->   select net.http_post(
->     url := 'https://YOUR_APP/api/send-reminders',
->     headers := '{"Authorization":"Bearer YOUR_CRON_SECRET"}'::jsonb
->   );
-> $$);
-> ```
+To inspect or change it:
+```sql
+select * from cron.job;                       -- view the schedule
+select cron.unschedule('meal-reminders');     -- remove it
+```
+
+> If you later upgrade to Vercel **Pro**, you could instead move this back to a
+> `vercel.json` cron (`"schedule": "0 * * * *"`) and unschedule the pg_cron job.
 
 ## Reality & limitations
 - **iOS:** Web Push only works if the user installs the PWA to the Home Screen
