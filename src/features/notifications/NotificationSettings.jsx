@@ -47,7 +47,7 @@ export default function NotificationSettings({ userId }) {
         <div className="min-w-0">
           <h2 className="text-sm font-semibold text-ink">Meal reminders</h2>
           <p className="mt-0.5 text-xs text-muted">
-            A nudge to log your food, only when you haven't already.
+            A nudge to log your food, only on days you haven't logged anything.
           </p>
         </div>
 
@@ -57,13 +57,13 @@ export default function NotificationSettings({ userId }) {
           aria-label="Toggle meal reminders"
           disabled={disabled}
           onClick={toggle}
-          className={`relative h-7 w-12 shrink-0 rounded-full transition-colors disabled:opacity-40 ${
+          className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors disabled:opacity-40 ${
             on ? 'bg-brand' : 'bg-white/15'
           }`}
         >
           <span
-            className={`absolute top-0.5 h-6 w-6 rounded-full bg-white shadow transition-transform ${
-              on ? 'translate-x-[1.375rem]' : 'translate-x-0.5'
+            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+              on ? 'translate-x-6' : 'translate-x-1'
             }`}
           />
         </button>

@@ -18,26 +18,24 @@ import { createClient } from '@supabase/supabase-js'
 
 export const config = { maxDuration: 30 }
 
-// Reminder slots by local hour. `meals` are the meal_types that "count" for the
-// slot — if any is already logged today, we stay quiet (the "smart" part).
+// Reminder slots by local hour. We only nudge on days the user has logged
+// NOTHING at all — the moment they log anything, reminders go quiet for the
+// rest of that day.
 const SLOTS = [
   {
     hour: 12,
-    meals: ['breakfast', 'lunch'],
-    title: 'Lunchtime 🍽️',
-    body: "Haven't logged today yet? Tap to add your meals.",
+    title: "Don't forget to log 🍽️",
+    body: "You haven't logged any food today — tap to add a meal.",
   },
   {
     hour: 16,
-    meals: ['lunch', 'snack'],
-    title: 'Afternoon check-in',
-    body: 'Did you log lunch? A few taps keeps your day accurate.',
+    title: 'Nothing logged yet today',
+    body: 'Take a few seconds to log what you’ve eaten so far.',
   },
   {
     hour: 20,
-    meals: ['dinner'],
-    title: 'Log your dinner 🌙',
-    body: 'Wrap up your day — log dinner to keep your streak alive.',
+    title: 'Log your day 🌙',
+    body: "You haven't logged anything today — add it before bed?",
   },
 ]
 
@@ -109,13 +107,12 @@ export default async function handler(req, res) {
       continue
     }
 
-    // Smart check: stay quiet if the relevant meal is already logged today.
+    // Stay quiet if the user has logged anything at all today.
     const { data: logs } = await supabase
       .from('food_logs')
       .select('id')
       .eq('user_id', sub.user_id)
       .eq('logged_date', local.date)
-      .in('meal_type', slot.meals)
       .limit(1)
     if (logs && logs.length) {
       skipped++

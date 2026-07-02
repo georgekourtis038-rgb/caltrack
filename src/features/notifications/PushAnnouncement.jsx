@@ -65,8 +65,8 @@ export default function PushAnnouncement() {
                 Meal reminders
               </h2>
               <p className="mt-2 text-sm leading-relaxed text-muted">
-                Get a gentle nudge to log your food during the day — but only when you
-                haven't already logged that meal. Turn it on anytime.
+                Get a gentle nudge to log your food during the day — but only on days
+                you haven't logged anything yet. Turn it on anytime.
               </p>
             </div>
 

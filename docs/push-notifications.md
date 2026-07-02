@@ -1,7 +1,7 @@
 # Meal reminder push notifications
 
-Server-scheduled Web Push reminders that nudge a user to log food — but only
-when they haven't already logged the relevant meal that day.
+Server-scheduled Web Push reminders that nudge a user to log food — but only on
+days they haven't logged anything at all.
 
 ## How it works
 
@@ -14,7 +14,7 @@ when they haven't already logged the relevant meal that day.
    the `push_subscriptions` table (`src/features/notifications/push.js`).
 3. **Sending** — an hourly job hits `/api/send-reminders`. For each enabled
    subscription it computes the user's local time; if the current hour is a slot
-   (12:00 / 16:00 / 20:00) and the relevant meal isn't logged today, it sends a
+   (12:00 / 16:00 / 20:00) and the user has logged nothing that day, it sends a
    push. `public/push-sw.js` (loaded into the Workbox service worker) shows it
    and focuses the app on tap.
 
